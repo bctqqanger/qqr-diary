@@ -42,14 +42,5 @@ const FRIENDS = [
       'assets/img/ph-02.svg',
       'assets/img/ph-05.svg'
     ]
-  },
-  {
-    id: 'friend-03',
-    name: '空白',
-    avatar: 'assets/img/avatars/blank.svg',
-    blank: true,
-    note: '占位：空白。',
-    tags: [],
-    images: []
   }
 ];
