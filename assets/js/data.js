@@ -1,86 +1,55 @@
 /* ==========================================================================
-   QQR's diary — 好友数据
+   小虫记 — 条目数据
    --------------------------------------------------------------------------
-   新增一位好友 = 在这个数组里加一个对象。字段说明：
+   新增一个条目 = 在这个数组里加一个对象。字段说明：
 
    id      唯一标识，用于链接 #/friend/<id>，不可重复
-   name    好友名（显示在头像上，以及右侧信息条）
-   avatar  头像路径；可以省略，省略时自动取 images 的第一张
-   note    一句话备注，显示在右侧信息条
-   tags    标签数组，可以留空 []
-   images  该好友的全部图片；第一张作为右侧大图默认显示
+   name    名称（显示在左侧卡片姓名牌，以及右侧页签）
+   avatar  立绘路径；可以省略，省略时自动取 images 的第一张
+   plate   右页底图路径；省略时用默认的奶油底衬（纸屑 + 太阳 + 气球），
+           给了图就整页铺这张图，并自动压一层浅色蒙版让它不喧宾夺主
+   blank   设为 true 时右页完全不摆照片，只留姓名与底衬（"空白"页）
+   note    一句话备注（当前页面未展示，留着备查）
+   tags    标签数组，可以留空 []（当前页面未展示）
+   captions 与 images 一一对应的照片标题，显示在右侧照片左下角的小白牌上；
+            留空数组或删掉这个字段，照片就不带标题
+   images  该条目的全部图片
 
-   提示：下面的名字与内容都是占位，换成你自己的好友昵称即可。
+   提示：名字与图片均为占位，换成自己的内容即可。
    ========================================================================== */
 
 const FRIENDS = [
   {
     id: 'friend-01',
-    name: '温迪',
-    avatar: 'assets/img/avatars/av-01.svg',
-    note: '在风起地认识的诗人，琴弹得好，名字大概是现编的。',
-    tags: ['蒙德', '风元素'],
+    name: '落叶',
+    avatar: 'assets/img/avatars/luoye.png',
+    plate: 'assets/img/plate/luoye.jpg',
+    note: '占位：落叶。',
+    tags: [],
     images: [
-      'assets/img/ph-01.svg',
-      'assets/img/ph-05.svg',
-      'assets/img/ph-08.svg'
+      'assets/img/album/luoye-01.jpg',
+      'assets/img/album/luoye-02.jpg',
+      'assets/img/album/luoye-03.jpg'
     ]
   },
   {
     id: 'friend-02',
-    name: '钟离',
-    avatar: 'assets/img/avatars/av-02.svg',
-    note: '知识面广得离谱，聊起来能讲一下午璃月的老故事。',
-    tags: ['璃月', '岩元素'],
+    name: '故里',
+    avatar: 'assets/img/avatars/av-08.svg',
+    note: '占位：故里。',
+    tags: [],
     images: [
       'assets/img/ph-02.svg',
-      'assets/img/ph-06.svg'
+      'assets/img/ph-05.svg'
     ]
   },
   {
     id: 'friend-03',
-    name: '影',
-    avatar: 'assets/img/avatars/av-03.svg',
-    note: '约在鸣神大社躲了一场雨，之后就成了固定搭档。',
-    tags: ['稻妻', '雷元素'],
-    images: [
-      'assets/img/ph-03.svg',
-      'assets/img/ph-07.svg',
-      'assets/img/ph-01.svg'
-    ]
-  },
-  {
-    id: 'friend-04',
-    name: '纳西妲',
-    avatar: 'assets/img/avatars/av-04.svg',
-    note: '带着我在化城郭转了一早上，熟得像本地导游。',
-    tags: ['须弥', '草元素'],
-    images: [
-      'assets/img/ph-04.svg',
-      'assets/img/ph-02.svg'
-    ]
-  },
-  {
-    id: 'friend-05',
-    name: '芙宁娜',
-    avatar: 'assets/img/avatars/av-05.svg',
-    note: '枫丹廷水下那片断柱就是她带我去的，胆子比我大得多。',
-    tags: ['枫丹', '水元素'],
-    images: [
-      'assets/img/ph-05.svg',
-      'assets/img/ph-08.svg'
-    ]
-  },
-  {
-    id: 'friend-06',
-    name: '玛薇卡',
-    avatar: 'assets/img/avatars/av-06.svg',
-    note: '爬火山口的时候全程走在最前面，还嫌我慢。',
-    tags: ['纳塔', '火元素'],
-    images: [
-      'assets/img/ph-06.svg',
-      'assets/img/ph-03.svg',
-      'assets/img/ph-04.svg'
-    ]
+    name: '空白',
+    avatar: 'assets/img/avatars/blank.svg',
+    blank: true,
+    note: '占位：空白。',
+    tags: [],
+    images: []
   }
 ];

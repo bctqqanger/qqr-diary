@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QQR's diary</title>
+  <title>小虫记</title>
   <meta name="description" content="提瓦特漫游记录 · 一个人的游逸旅闻">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="QQR's diary">
+  <meta property="og:title" content="小虫记">
   <meta property="og:description" content="提瓦特漫游记录 · 一个人的游逸旅闻">
-  <meta property="og:image" content="assets/img/ph-01.svg">
+  <meta property="og:image" content="assets/img/album/luoye-01.jpg">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -21,21 +21,20 @@
     <div class="backdrop__veil"></div>
   </div>
 
-  <!-- 摊开的书：左页好友头像，右页图片 -->
+  <!-- 摊开的书：左页条目卡片，右页图片 -->
   <div class="book">
-    <div class="book__spine" aria-hidden="true"></div>
 
-    <!-- 左页：好友头像网格 -->
+    <!-- 左页：条目卡片网格 -->
     <section class="page page--left">
       <header class="brand">
-        <h1 class="brand__title">QQR's diary</h1>
+        <h1 class="brand__title">小虫记</h1>
         <p class="brand__sub">提瓦特漫游记录</p>
         <p class="brand__stat">
-          <span class="brand__mark"></span>已收录 <b id="statCount">0</b> 位好友
+          <span class="brand__mark"></span>已收录 <b id="statCount">0</b> 则记录
         </p>
       </header>
 
-      <nav class="grid" id="grid" aria-label="好友列表"></nav>
+      <nav class="grid" id="grid" aria-label="记录列表"></nav>
 
       <footer class="page__foot">非官方个人站 · 仅用于记录</footer>
     </section>
@@ -44,22 +43,19 @@
     <section class="page page--right" id="stage" aria-live="polite"></section>
   </div>
 
-  <!-- 窄屏返回好友列表 -->
-  <button class="backbtn" id="backBtn" type="button">‹ 好友列表</button>
+  <!-- 窄屏返回记录列表 -->
+  <button class="backbtn" id="backBtn" type="button">‹ 记录列表</button>
 
-  <!-- 图片放大层 -->
+  <!-- 图片放大层：点击图片以外的任意位置即可关闭 -->
   <div class="lightbox" id="lightbox" hidden>
-    <button class="lightbox__btn lightbox__close" id="lbClose" type="button" aria-label="关闭">✕</button>
-    <button class="lightbox__btn lightbox__nav lightbox__nav--prev" id="lbPrev" type="button" aria-label="上一张">‹</button>
     <figure class="lightbox__figure">
       <img class="lightbox__img" id="lbImg" src="" alt="">
       <figcaption class="lightbox__cap" id="lbCap"></figcaption>
     </figure>
-    <button class="lightbox__btn lightbox__nav lightbox__nav--next" id="lbNext" type="button" aria-label="下一张">›</button>
-    <div class="lightbox__count" id="lbCount"></div>
   </div>
 
   <script src="assets/js/data.js"></script>
   <script src="assets/js/main.js"></script>
+  </script>
 </body>
 </html>

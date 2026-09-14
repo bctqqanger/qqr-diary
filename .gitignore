@@ -1,5 +1,7 @@
 # 本地附件与会话缓存，不应提交
 .reasonix/
+.workbuddy/
+.tmp-ref/
 
 # 系统文件
 .DS_Store
