@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400" role="img" aria-label="尚未补充立绘的占位图">
+  <defs>
+    <!-- 天空：由奶油白到暖沙色 -->
+    <linearGradient id="ph-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fdf7ea"/>
+      <stop offset="0.42" stop-color="#f9ead0"/>
+      <stop offset="1" stop-color="#f0dcb8"/>
+    </linearGradient>
+
+    <!-- 落日：中心亮、外圈化开 -->
+    <radialGradient id="ph-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe9a8" stop-opacity="0.85"/>
+      <stop offset="0.45" stop-color="#ffdd8f" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#ffdd8f" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="ph-water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#efe3c8"/>
+      <stop offset="1" stop-color="#f6eed8"/>
+    </linearGradient>
+
+    <radialGradient id="ph-reflect" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe4a2" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffe4a2" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- 纸面颗粒：与卡片纸张的噪点语言保持一致 -->
+    <filter id="ph-grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 0.36
+                0 0 0 0 0.30
+                0 0 0 0 0.21
+                0 0 0 0.085 0"/>
+    </filter>
+
+    <!-- 云与雾气用一点点模糊，免得看起来像几块白色贴纸 -->
+    <filter id="ph-soft" x="-14%" y="-50%" width="128%" height="200%">
+      <feGaussianBlur stdDeviation="2.6"/>
+    </filter>
+  </defs>
+
+  <rect width="300" height="400" fill="url(#ph-sky)"/>
+
+  <!-- 落日放在右上，别和树叠在一起 -->
+  <circle cx="204" cy="134" r="126" fill="url(#ph-glow)"/>
+  <circle cx="204" cy="134" r="38" fill="#f9d98d"/>
+  <circle cx="204" cy="134" r="38" fill="#fff4d2" fill-opacity="0.35"/>
+
+  <!-- 云：几抹压得很浅的白，带一点雾感 -->
+  <g filter="url(#ph-soft)" fill="#fffdf6" fill-opacity="0.62">
+    <ellipse cx="72"  cy="100" rx="46" ry="11"/>
+    <ellipse cx="104" cy="92"  rx="26" ry="8"/>
+    <ellipse cx="126" cy="146" rx="30" ry="8" fill-opacity="0.42"/>
+    <ellipse cx="252" cy="196" rx="34" ry="8" fill-opacity="0.42"/>
+    <ellipse cx="150" cy="228" rx="66" ry="7" fill-opacity="0.34"/>
+  </g>
+
+  <!-- 远处飞鸟 -->
+  <g fill="none" stroke="#9a8c74" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round">
+    <path d="M148 118 l6 -5 l6 5"/>
+    <path d="M170 102 l5 -4 l5 4"/>
+    <path d="M188 126 l4 -3 l4 3"/>
+  </g>
+
+  <!-- 远山：冷一点、压得淡，圆缓的轮廓退到后面去 -->
+  <path d="M0 256 C 32 236 56 230 86 244 C 114 256 136 232 166 228
+           C 198 224 216 248 248 248 C 272 248 286 238 300 232
+           L300 400 L0 400 Z"
+        fill="#c8d4c4" fill-opacity="0.8"/>
+
+  <!-- 近山：暖沙色，压住远山 -->
+  <path d="M0 284 C 28 272 52 262 80 270 C 108 278 130 258 160 256
+           C 190 254 212 272 240 274 C 268 276 284 266 300 262
+           L300 400 L0 400 Z"
+        fill="#e2d3ae"/>
+
+  <!-- 山脊小村：一个屋顶剪影，点一下"故里"的意思 -->
+  <g fill="#bda98a" fill-opacity="0.85">
+    <path d="M232 258 l16 -11 l16 11 z"/>
+    <rect x="238" y="257" width="20" height="14"/>
+  </g>
+  <path d="M266 274 l13 -9 l13 9 z" fill="#c3b092" fill-opacity="0.7"/>
+
+  <!-- 水面 / 田野 -->
+  <rect x="0" y="296" width="300" height="104" fill="url(#ph-water)"/>
+  <ellipse cx="196" cy="304" rx="92" ry="16" fill="url(#ph-reflect)"/>
+  <g stroke="#ffffff" stroke-opacity="0.4" stroke-width="1.6" stroke-linecap="round">
+    <path d="M124 316 H210"/>
+    <path d="M146 330 H236"/>
+    <path d="M104 346 H182"/>
+  </g>
+
+  <!-- 一棵孤树，给画面一个尺度 -->
+  <g>
+    <ellipse cx="98" cy="294" rx="26" ry="5" fill="#b9a882" fill-opacity="0.32"/>
+    <path d="M96 294 L96 244" stroke="#a8917a" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+    <path d="M96 264 L85 252 M96 256 L107 246" stroke="#a8917a" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <g fill="#c0ac84">
+      <ellipse cx="96" cy="238" rx="27" ry="16"/>
+      <ellipse cx="82" cy="248" rx="16" ry="10"/>
+      <ellipse cx="111" cy="248" rx="15" ry="9"/>
+    </g>
+    <g fill="#d3c19b" fill-opacity="0.75">
+      <ellipse cx="90" cy="232" rx="14" ry="8"/>
+      <ellipse cx="109" cy="242" rx="8" ry="5"/>
+    </g>
+  </g>
+
+  <!-- 前景草叶，压住底边 -->
+  <g fill="#c9b98f" fill-opacity="0.72">
+    <path d="M18 400 C22 372 26 360 34 348 C30 366 30 382 30 400 Z"/>
+    <path d="M38 400 C44 378 52 366 62 356 C54 372 52 386 52 400 Z"/>
+    <path d="M262 400 C264 376 270 362 280 350 C274 370 272 386 272 400 Z"/>
+    <path d="M284 400 C290 380 298 368 308 358 C300 374 298 388 298 400 Z"/>
+  </g>
+
+  <rect width="300" height="400" filter="url(#ph-grain)"/>
+</svg>

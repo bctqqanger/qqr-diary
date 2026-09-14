@@ -1,5 +1,5 @@
 /* ==========================================================================
-   小虫记 — 交互
+   小虫友记 — 交互
    页面形态：一本摊开的书
      左页 = 条目卡片墙（逸闻纪事式立绘卡，点击选中）
      右页 = 该条目的照片墙（照片错落摆放，点一张才弹出全屏大图）
@@ -229,15 +229,23 @@
     });
   }
 
+  /* 条目不满一屏时网格垂直居中；放不下时切回顶部对齐
+     （居中 + 溢出会让上半截滚不回来，见 CSS 里的注释） */
+  var listScrolling = false;
+
+  function layoutList() {
+    var over = gridEl.scrollHeight - gridEl.clientHeight > 2;
+    if (over === listScrolling) return;
+    listScrolling = over;
+    gridEl.classList.toggle('is-scroll', over);
+  }
+
   /* ------------------------------------------ 右页：好友图片小图 */
 
   function renderPlate(f) {
-    // 该条目的图片；blank 条目右页留白不摆照片，
-    // 其余没有图片时退回头像，保证右页不会空着
-    gallery = (f.blank
-      ? []
-      : (f.images && f.images.length ? f.images.slice() : [avatarOf(f)])
-    ).filter(Boolean);
+    // 该条目的图片；没有图片时退回头像，保证右页不会空着
+    gallery = (f.images && f.images.length ? f.images.slice() : [avatarOf(f)])
+      .filter(Boolean);
     galleryTitle = f.name;
 
     stageEl.textContent = '';
@@ -463,14 +471,22 @@
   // 窗口缩放后重新量一遍照片墙（监听只挂一次，操作的是当前条目的墙）
   window.addEventListener('resize', function () {
     if (fitShotsFn) fitShotsFn();
+    layoutList();
   });
 
   // 整页资源载入完成后重量一次（字体/图片会把行高和容器高度顶一下）
   window.addEventListener('load', function () {
     if (fitShotsFn) fitShotsFn();
+    layoutList();
   });
 
   renderGrid();
+  layoutList();
+
+  // 网格容器尺寸一变就重量（窄屏旋转、窗口缩放都走这里）
+  if (window.ResizeObserver) {
+    new ResizeObserver(layoutList).observe(gridEl);
+  }
 
   var m = /^#\/friend\/(.+)$/.exec(location.hash);
   if (m) {
