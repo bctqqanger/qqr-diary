@@ -490,19 +490,9 @@
     pauseAllVideos(lbMedia);
     lbMedia.textContent = '';
 
-    var el;
-    if (isVideo(src)) {
-      el = make('video');
-      el.setAttribute('src', src);
-      el.setAttribute('controls', '');
-      el.setAttribute('loop', '');
-      el.setAttribute('playsinline', '');
-      el.alt = galleryTitle;
-    } else {
-      el = make('img');
-      el.setAttribute('src', src);
-      el.alt = galleryTitle;
-    }
+    var el = make('img');   // 放大层只放图片，视频留在墙内播放
+    el.setAttribute('src', src);
+    el.alt = galleryTitle;
     lbMedia.appendChild(el);
 
     // 有照片名就显示照片名（如 出土芙蓉），没有则退回好友名
@@ -516,16 +506,19 @@
     lbNext.disabled = lbIndex >= gallery.length - 1;
   }
 
-  /** 翻一张：-1 上一张 / +1 下一张，到端点就停 */
+  /** 翻一张：-1 上一张 / +1 下一张，跳过视频（不进放大层），到端点就停 */
   function stepLightbox(delta) {
     var next = lbIndex + delta;
+    while (next >= 0 && next <= gallery.length - 1 && isVideo(gallery[next])) {
+      next += delta;
+    }
     if (next < 0 || next > gallery.length - 1) return;
     lbIndex = next;
     renderLightbox();
   }
 
   function openLightbox(src) {
-    if (!src) return;
+    if (!src || isVideo(src)) return;   // 视频不进放大层：手机端表现异常，墙内直接播放
     lbIndex = gallery.indexOf(src);
     if (lbIndex < 0) lbIndex = 0;
     renderLightbox();

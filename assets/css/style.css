@@ -791,7 +791,8 @@ body.is-locked { overflow: hidden; }
 
   body.is-detail .backbtn { display: flex; }
 
-  .plate__grid { padding: 20px 18px 54px; }
+  /* 顶部让开左上角固定的「返回」按钮（top:14px + 按钮高约 36px） */
+  .plate__grid { padding: 66px 18px 54px; }
 
   .shot:hover { transform: rotate(0deg) translate(var(--dx, 0px), -4px) scale(var(--sc, 1)); }
 
@@ -867,9 +868,22 @@ body.is-locked { overflow: hidden; }
   width: max(84px, 6vw);
   aspect-ratio: 1 / 1;
   padding: 0;
+  overflow: visible;   /* 让头顶的 🐛 一半探出画外不被裁切 */
   transform: translateY(-50%);
   background: none;
   box-shadow: 0 2px 6px -2px rgba(92, 77, 66, 0.4);
+}
+
+/* 头顶的 🐛 苹果表情：半重叠在头像上沿（上探 13% = 表情高的一半），
+   尺寸随头像流式缩放；纯装饰不拦截点击 */
+.friend__bug {
+  position: absolute;
+  top: -13%;
+  left: 50%;
+  width: 26%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(92, 77, 66, 0.35));
 }
 
 .friend--me .friend__avatar { background: none; outline: 0; }
