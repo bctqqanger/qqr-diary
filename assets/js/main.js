@@ -21,7 +21,7 @@
   var backBtn = document.getElementById('backBtn');
 
   var lightbox = document.getElementById('lightbox');
-  var lbImg    = document.getElementById('lbImg');
+  var lbMedia  = document.getElementById('lbMedia');
   var lbCap    = document.getElementById('lbCap');
 
   // 背景双层，交替淡入实现平滑切换
@@ -49,10 +49,20 @@
     return null;
   }
 
-  /** 头像：优先取 avatar 字段，缺省时用第一张图片 */
+  /** 视频后缀判定（用于照片墙与放大层选择 <video> 渲染） */
+  function isVideo(src) {
+    return /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(src);
+  }
+
+  /** 头像：优先取 avatar 字段，缺省时用第一张图片（跳过视频，<img> 撑不住视频源） */
   function avatarOf(f) {
     if (f.avatar) return f.avatar;
-    if (f.images && f.images.length) return f.images[0];
+    if (f.images && f.images.length) {
+      for (var i = 0; i < f.images.length; i++) {
+        if (!isVideo(f.images[i])) return f.images[i];
+      }
+      return f.images[0];   // 全是视频时退回第一张，由调用方承担
+    }
     return '';
   }
 
@@ -78,54 +88,45 @@
   }
 
   /**
-   * 以 seed 为基准取一组错落参数，写进元素的 CSS 变量。
+   * 规整排版：统一尺寸、统一间距、不旋转、不位移。
+   * 所有照片同一宽度、同一行高，像贴整齐的相册页。
+   * 初始画幅用 16:9 兜底（游戏截图常见比例），媒体真实分辨率到达后
+   * 由 applyNaturalAspect 按各自比例修正，避免长时间裁切。
    * @param {number} order 第几张（0 起）
    * @param {number} total 该好友一共几张
    */
   function scatter(el, seed, order, total) {
-    var rot = hash01(seed + 'rot');
-    var wid = hash01(seed + 'wid');
-    var dx  = hash01(seed + 'dx');
-    var dy  = hash01(seed + 'dy');
-    var my  = hash01(seed + 'my');
-    var mx  = hash01(seed + 'mx');
-    var z   = hash01(seed + 'z');
-    var ar  = hash01(seed + 'ar');
-    var sc  = hash01(seed + 'sc');
+    el.style.setProperty('--rot', '0deg');
+    el.style.setProperty('--dx',  '0px');
+    el.style.setProperty('--dy',  '0px');
+    el.style.setProperty('--sc',  '1');
+    el.style.setProperty('--z',   '1');
+    el.style.setProperty('--ar',  '16 / 9');
 
-    var aspects = ['16 / 9', '4 / 3', '3 / 2'];
+    // 统一宽度：与落叶的相册页同一套排版，等宽两列起排（单张时占列首）
+    el.style.setProperty('--w', '38%');
 
-    // 角度只在 ±5° 内摆：参考图那样"随手一放"，而不是东倒西歪
-    el.style.setProperty('--rot', ((rot * 2 - 1) * 5).toFixed(2) + 'deg');
-    el.style.setProperty('--dx',  ((dx * 2 - 1) * 10).toFixed(1) + 'px');
-    el.style.setProperty('--dy',  ((dy * 2 - 1) * 9).toFixed(1) + 'px');
-    el.style.setProperty('--sc',  (0.96 + sc * 0.08).toFixed(3));
-    // 层级随顺序递增（右边的压在左边上），标牌才不会互相遮住
-    el.style.setProperty('--z',   String(order * 4 + Math.round(z * 3) + 1));
-    el.style.setProperty('--ar',  aspects[Math.floor(ar * aspects.length) % aspects.length]);
-
-    if (total === 2) {
-      // 两张：左右并排，一高一低斜着摆。
-      // 宽度压在半页内才放得进同一行，纵向大幅错开把页面填满。
-      el.style.setProperty('--w',  (46 + wid * 4).toFixed(1) + '%');
-      var low = (order === 0) === (hash01(seed + 'stag') > 0.5);
-      el.style.setProperty('--mt', (low ? 208 + my * 92 : 40 + my * 68).toFixed(1) + 'px');
-      el.style.setProperty('--my', '12px');
-      // 左边留一点正边距，行首照片不会往左漂出页面；右边取负，靠重叠产生错落感
-      el.style.setProperty('--ml', (2 + mx * 4).toFixed(1) + 'px');
-      el.style.setProperty('--mr', (-(14 + mx * 28)).toFixed(1) + 'px');
-    } else {
-      // 一张整体放大；三张以上压到半页以内，两两并排成两行
-      var wMin = total >= 3 ? 42 : 70;
-      var wMax = total >= 3 ? 49 : 86;
-      el.style.setProperty('--w',  (wMin + wid * (wMax - wMin)).toFixed(1) + '%');
-      // 纵向留白一致，给照片左下角的标牌腾地方，行与行不互相叠压
-      var m = ((my * 2 - 1) * 5 + 13).toFixed(1) + 'px';
-      el.style.setProperty('--mt', m);
-      el.style.setProperty('--my', m);
-      el.style.setProperty('--ml', (2 + mx * 4).toFixed(1) + 'px');
-      el.style.setProperty('--mr', (-(7 + mx * 25)).toFixed(1) + 'px');
+    // 统一间距：只留正边距，行与行不叠压
+    el.style.setProperty('--mt', '14px');
+    el.style.setProperty('--my', '30px');
+    el.style.setProperty('--ml', '0px');
+    el.style.setProperty('--mr', '6%');
+    // 两列布局里行末那张不吃右边距，照片整体才居中
+    if (total >= 2 && (order + 1) % 2 === 0) {
+      el.style.setProperty('--mr', '0px');
     }
+  }
+
+  /**
+   * 媒体真实分辨率到达后，把内联 aspect-ratio 设为自身比例。
+   * 内联 aspect-ratio 直接作用于属性，能压过 .shot 的 --ar
+   * （含手机端 !important 那条——important 只挂在变量上），
+   * 外框比例与媒体一致后 cover 也不再裁切；再重量一次照片墙居中垫片。
+   */
+  function applyNaturalAspect(el, width, height) {
+    if (!width || !height) return;
+    el.style.aspectRatio = width + ' / ' + height;
+    requestAnimationFrame(function () { if (fitShotsFn) fitShotsFn(); });
   }
 
   /* 页面底衬：几片淡彩纸屑 + 左下暖阳 + 右上气球，纯氛围不抢内容 */
@@ -181,6 +182,9 @@
 
   function setBackdrop(src) {
     if (!src || !backdrops[0]) return;
+    // 视频不做虚化背景：用 <img> 撑不住视频源，且耗性能，
+    // 直接保留当前背景（通常是该好友上一张图片或兜底深色）
+    if (isVideo(src)) return;
 
     var cur = backdrops[backdropTop];
     var next = backdrops[1 - backdropTop];
@@ -243,6 +247,9 @@
   /* ------------------------------------------ 右页：好友图片小图 */
 
   function renderPlate(f) {
+    // 切换好友前先暂停旧页的视频，免得躲在 DOM 里继续放
+    pauseAllVideos();
+
     // 该条目的图片；没有图片时退回头像，保证右页不会空着
     gallery = (f.images && f.images.length ? f.images.slice() : [avatarOf(f)])
       .filter(Boolean);
@@ -265,20 +272,12 @@
       });
     }
 
-    /* --- 紧凑头部：右页只保留姓名 --- */
-    var head = make('div', 'plate__head');
-    head.appendChild(make('h2', 'plate__title', f.name));
-
-    plate.appendChild(head);
-
     /* --- 照片墙：错落摆放的小照片，点任意一张才出全屏大图 --- */
     var shots = make('div', 'plate__grid');
 
-    // 一前一后两个隐形垫子：前垫把不满一页的照片顶到垂直居中；
-    // 后垫在内容下面永远垫出约小半页的余量，右页随时都能下滑
-    var lead = make('i', 'plate__lead');
+    // 隐形后垫：在内容下面永远垫出约小半页的余量，右页随时都能下滑。
+    // 照片一律从页顶排起（与落叶的相册页一致），不做垂直居中
     var fill = make('i', 'plate__fill');
-    shots.appendChild(lead);
 
     gallery.forEach(function (src, i) {
       var btn = make('button', 'shot');
@@ -286,17 +285,40 @@
       btn.title = '点击查看大图';
       scatter(btn, f.id + '|' + i + '|' + src, i, gallery.length);
 
-      var img = make('img');
-      img.setAttribute('src', src);
-      img.alt = f.name + ' 图 ' + (i + 1);
-      img.loading = 'lazy';
-      btn.appendChild(img);
+      var media;
+      if (isVideo(src)) {
+        btn.classList.add('shot--video');
+        media = make('video');
+        media.setAttribute('src', src);
+        media.setAttribute('controls', '');
+        media.setAttribute('loop', '');
+        media.setAttribute('muted', '');
+        media.setAttribute('playsinline', '');
+        media.preload = 'metadata';
+        media.alt = f.name + ' 图 ' + (i + 1);
+        // 拿到真实分辨率后按视频自身比例撑高外框
+        media.addEventListener('loadedmetadata', function () {
+          applyNaturalAspect(media, media.videoWidth, media.videoHeight);
+        });
+      } else {
+        media = make('img');
+        media.setAttribute('src', src);
+        media.alt = f.name + ' 图 ' + (i + 1);
+        media.loading = 'lazy';
+        // 图片加载完按自身比例撑高外框；complete 分支兜住缓存命中（load 可能已错过）
+        media.addEventListener('load', function () {
+          applyNaturalAspect(media, media.naturalWidth, media.naturalHeight);
+        });
+        if (media.complete && media.naturalWidth) {
+          applyNaturalAspect(media, media.naturalWidth, media.naturalHeight);
+        }
+      }
+      btn.appendChild(media);
 
-      // 可选：data.js 里给了 captions 才显示照片下方的小字
+      // caption 只用于全屏放大层标题，照片墙上不再显示小标牌
       var cap = f.captions && f.captions[i];
-      if (cap) btn.appendChild(make('span', 'shot__cap', cap));
 
-      btn.addEventListener('click', function () { openLightbox(src); });
+      btn.addEventListener('click', function () { openLightbox(src, cap); });
 
       shots.appendChild(btn);
     });
@@ -314,13 +336,12 @@
 
     shotsEl = shots;
 
-    /* 布局：量照片实际高度，写入两个垫子的尺寸。
+    /* 布局：量照片实际高度，写入后垫的尺寸。
        提示（hintB / hintT）挂在 .plate 上而不是滚动容器里，不然会跟着内容一起滚走 */
     function layoutShots() {
       if (shotsEl !== shots) return;   // 已经切到别的条目，作废
 
       // 1) 先把垫子清零，量照片本身有多高（offsetTop 相对本容器，不受滚动影响）
-      lead.style.height = '0px';
       fill.style.height = '0px';
 
       var viewH = shots.clientHeight;
@@ -330,26 +351,18 @@
 
       var bottom = 0;
       Array.prototype.forEach.call(shots.children, function (n) {
-        if (n === lead || n === fill) return;
+        if (n === fill) return;
         bottom = Math.max(bottom, n.offsetTop + n.offsetHeight);
       });
 
-      // 2) 前垫：照片不满一页时顶到视觉居中；放不下时归零（顶部对齐）
-      var area  = viewH - pt - pb;          // 可视内容区高
-      var leadH = 0;
-      if (bottom && bottom + pb + pt <= viewH) {
-        leadH = Math.max(0, Math.floor((viewH - bottom - pb - pt) / 2));
-      }
-      lead.style.height = leadH + 'px';
-
-      // 3) 后垫：先把内容补足到一整屏，再多垫出一小段行程。
+      // 2) 后垫：先把内容补足到一整屏，再多垫出一小段行程。
       //    这样无论照片几张、哪怕一张都没有，下滑量都一样，只是轻轻推一下
+      var area  = viewH - pt - pb;          // 可视内容区高
       var travel = Math.min(300, Math.max(140, Math.round(viewH * 0.35)));
-      var used   = leadH + bottom;
-      fill.style.height = (Math.max(0, area - used) + travel) + 'px';
+      fill.style.height = (Math.max(0, area - bottom) + travel) + 'px';
 
-      // 4) 顶边渐隐落在姓名牌下方：两者叠在一起时页签会被渐变冲淡
-      hintT.style.top = (head.offsetTop + head.offsetHeight) + 'px';
+      // 4) 顶边渐隐直接贴住页顶（右页已没有姓名页签）
+      hintT.style.top = '0px';
 
       updateHints();
     }
@@ -384,10 +397,17 @@
     // 两帧之后布局稳定再量一次（图片带 aspect-ratio，加载前高度就已确定）
     requestAnimationFrame(function () { requestAnimationFrame(layoutShots); });
 
+    // 右页页脚：旅途的收获。字体/分割线样式参考左页 .page__foot
+    plate.appendChild(make('footer', 'plate__foot', '旅途的收获'));
+
     stageEl.appendChild(plate);
 
-    // 背景取该好友的第一张，作为氛围底
-    setBackdrop(gallery[0]);
+    // 背景取该好友第一张图片（视频跳过），作为氛围底
+    var firstImg = '';
+    for (var k = 0; k < gallery.length; k++) {
+      if (!isVideo(gallery[k])) { firstImg = gallery[k]; break; }
+    }
+    setBackdrop(firstImg);
   }
 
   /* -------------------------------------------------------- 选中 */
@@ -428,11 +448,25 @@
 
   /* -------------------------------------------------- 全屏大图 */
 
-  function openLightbox(src) {
+  function openLightbox(src, caption) {
     if (!src) return;
-    lbImg.setAttribute('src', src);
-    lbImg.alt = galleryTitle;
-    lbCap.textContent = galleryTitle;
+    lbMedia.textContent = '';
+    var el;
+    if (isVideo(src)) {
+      el = make('video');
+      el.setAttribute('src', src);
+      el.setAttribute('controls', '');
+      el.setAttribute('loop', '');
+      el.setAttribute('playsinline', '');
+      el.alt = galleryTitle;
+    } else {
+      el = make('img');
+      el.setAttribute('src', src);
+      el.alt = galleryTitle;
+    }
+    lbMedia.appendChild(el);
+    // 有照片名就显示照片名（如 出土芙蓉），没有则退回好友名
+    lbCap.textContent = caption || galleryTitle;
     lightbox.hidden = false;
     document.body.classList.add('is-locked');
   }
@@ -440,17 +474,28 @@
   function closeLightbox() {
     lightbox.hidden = true;
     document.body.classList.remove('is-locked');
-    lbImg.setAttribute('src', '');
-    if (gallery.length) setBackdrop(gallery[0]);
+    // 暂停放大层里的视频（点关闭通常是想离开，不该继续放）
+    pauseAllVideos(lbMedia);
+    lbMedia.textContent = '';
+    if (gallery.length) {
+      // 背景恢复：找该好友第一张图片（视频跳过）
+      var firstImg = '';
+      for (var i = 0; i < gallery.length; i++) {
+        if (!isVideo(gallery[i])) { firstImg = gallery[i]; break; }
+      }
+      setBackdrop(firstImg || gallery[0]);
+    }
   }
 
-  // 点击图片以外的任何位置（即遮罩本身）即关闭大图
-  lightbox.addEventListener('click', function (e) {
-    if (e.target === lightbox) closeLightbox();
-  });
+  // 点击遮罩或媒体本体都关闭大图（caption 已 pointer-events:none，穿透到遮罩）
+  lightbox.addEventListener('click', closeLightbox);
 
-  // 点图片本身也能关（点击体验更顺滑）
-  lbImg.addEventListener('click', closeLightbox);
+  // 放大层里禁止上下/左右滑动（含旧 iOS WebView 对 touch-action 支持不全的情况）。
+  // 视频区域放行：拖动进度条等控件操作不应被拦；视频本身不可滚动，放行也不会带跑页面。
+  lightbox.addEventListener('touchmove', function (e) {
+    if (e.target && e.target.tagName === 'VIDEO') return;
+    e.preventDefault();
+  }, { passive: false });
 
   document.addEventListener('keydown', function (e) {
     if (lightbox.hidden) return;
@@ -459,7 +504,19 @@
 
   /* ------------------------------------------------------ 返回列表 */
 
+  /** 暂停当前右页里的全部视频
+   *  返回列表 / 切换好友 / 关闭放大层时都要调，
+   *  不然视频会躲在 DOM 里继续放声音 */
+  function pauseAllVideos(root) {
+    var scope = root || stageEl;
+    var vids = scope.querySelectorAll('video');
+    for (var i = 0; i < vids.length; i++) {
+      vids[i].pause();
+    }
+  }
+
   backBtn.addEventListener('click', function () {
+    pauseAllVideos();
     document.body.classList.remove('is-detail');
     if (/^#\/friend\//.test(location.hash)) location.hash = '';
   });

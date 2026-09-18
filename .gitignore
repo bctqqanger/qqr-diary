@@ -2,6 +2,10 @@
 .reasonix/
 .workbuddy/
 .tmp-ref/
+.zcode/
+
+# 原始素材图（已处理的网站资源在 assets/ 下）
+picture/
 
 # 本地调试预览页
 _dbg.html
