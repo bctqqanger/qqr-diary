@@ -28,6 +28,9 @@
 
 html, body { height: 100%; }
 
+/* PC 首页态书本右移，空盒会探出视口右侧，横向溢出一律裁掉 */
+html { overflow-x: hidden; }
+
 body {
   margin: 0;
   padding: 3vh 2vw;
@@ -86,8 +89,6 @@ body.is-locked { overflow: hidden; }
   grid-template-columns: 4fr 6fr;
   width: min(1320px, 96vw);
   height: min(860px, 92vh);
-  /* PC 端单页 ↔ 双页切换时宽度平滑过渡 */
-  transition: width 0.35s ease;
   border-radius: 3px 9px 9px 3px;
   overflow: hidden;
   background: var(--paper);
@@ -188,11 +189,13 @@ body.is-locked { overflow: hidden; }
   background: linear-gradient(90deg, var(--gold), rgba(212, 175, 55, 0));
 }
 
-/* 标题可点击回首页：完全保持原字体外观，无链接配色与下划线 */
+/* 标题即首页链接：外观不变，点击回到首页；悬停轻微变色作提示 */
 .brand__title a {
   color: inherit;
   text-decoration: none;
 }
+
+.brand__title a:hover { color: var(--copper); }
 
 .brand__sub {
   margin: 11px 0 0;
@@ -857,22 +860,46 @@ body.is-locked { overflow: hidden; }
 }
 
 /* PC 端（>1040px）：打开网站只展示左页形象照、单页居中；
-   点选形象照后右页照片墙弹出，合并为摊开的双页。
-   单页宽度取 528px = 现左页 4/10 等宽，展开时左页零回流 */
+   点选形象照后书本向左展开、露出右页照片墙，合并为摊开的双页。
+   书始终是双页布局：首页态整体右移 30%（正好让左页居中），
+   再用 clip-path 裁掉右页；展开时移回原位、裁口打开、右页带一点
+   视差淡入。全程只动 transform / clip-path / opacity，零回流，
+   左页内容与右页照片都不会因动画重新排版，顺滑不挤跳 */
 @media (min-width: 1041px) {
-  body:not(.is-detail) .book {
-    grid-template-columns: 1fr;
-    width: min(528px, 96vw);
+  .book {
+    transition:
+      transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1),
+      clip-path 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 
-  body:not(.is-detail) .page--right { display: none; }
+  body:not(.is-detail) .book {
+    transform: translateX(30%);
+    clip-path: inset(-80px 60% -80px -80px);
+  }
 
-  body.is-detail .page--right { animation: slidein 0.32s ease both; }
-}
+  body.is-detail .book {
+    clip-path: inset(-80px);
+  }
 
-@keyframes slidein {
-  from { opacity: 0; transform: translateX(36px); }
-  to   { opacity: 1; transform: none; }
+  .page--right {
+    transition:
+      opacity 0.4s ease,
+      transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1),
+      visibility 0s linear 0.5s;
+  }
+
+  body:not(.is-detail) .page--right {
+    opacity: 0;
+    transform: translateX(36px);
+    visibility: hidden;
+  }
+
+  body.is-detail .page--right {
+    opacity: 1;
+    transform: none;
+    /* 展开时右页稍等书页打开再浮现；收起时立刻可见，淡出完再隐藏 */
+    transition-delay: 0.08s, 0s, 0s;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
