@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>这次又会遇见谁？</title>
+  <title>旅途中的收获</title>
   <meta name="description" content="这次又会遇见谁？ · 一个人的游逸旅闻">
   <meta property="og:type" content="website">
   <meta property="og:title" content="小虫友记">
@@ -34,15 +34,23 @@
         <i class="sun"></i>
       </span>
 
-      <header class="brand">
-        <h1 class="brand__title">这次又会遇见谁？</h1>
-        <p class="brand__sub">提瓦特漫游记录</p>
-        <p class="brand__stat">
-          <span class="brand__mark"></span>已收录 <b id="statCount">0</b> 则记录
-        </p>
-      </header>
+      <!-- 整页滚动容器：品牌区 + 网格一起滑动，页脚钉在页底 -->
+      <div class="page__scroll" id="pageScroll">
+        <header class="brand">
+          <h1 class="brand__title">这次又会遇见谁？</h1>
+          <p class="brand__sub">提瓦特漫游记录</p>
+          <p class="brand__stat">
+            <span class="brand__mark"></span>已收录 <b id="statCount">0</b> 则记录
+          </p>
+          <button type="button" class="friend friend--me" id="meBtn" title="小虫">
+            <img class="friend__avatar" src="assets/img/avatars/xiaochong.png" alt="小虫">
+          </button>
+        </header>
 
-      <nav class="grid" id="grid" aria-label="记录列表"></nav>
+        <nav class="grid" id="grid" aria-label="记录列表"></nav>
+
+        <i class="page__fill" id="pageFill" aria-hidden="true"></i>
+      </div>
 
       <footer class="page__foot">我是小虫，这是我的朋友们^_^</footer>
     </section>

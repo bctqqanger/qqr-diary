@@ -77,3 +77,18 @@ const FRIENDS = [
     captions: []
   }
 ];
+
+/* 站主本人「小虫」：与其他角色同样式的形象照卡片，放在品牌区右上角 */
+const ME = {
+  id: 'me',
+  name: '小虫',
+  avatar: 'assets/img/avatars/xiaochong.png',
+  note: '站主本人。',
+  images: [
+    'assets/img/album/xiaochong-01.jpg',
+    'assets/img/album/xiaochong-02.jpg',
+    'assets/img/album/xiaochong-03.jpg',
+    'assets/img/album/xiaochong-04.jpg'
+  ],
+  captions: []
+};

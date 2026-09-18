@@ -114,6 +114,16 @@ body.is-locked { overflow: hidden; }
     linear-gradient(180deg, #fcf7ec, #f2e8d3);
 }
 
+/* 主页面（左页·形象照页）背景：手绘铅笔稿壁纸整页铺满。
+   图为浅底素描，深色文字与米色卡片直接压上去依然清晰，
+   故不再叠加纸色蒙版 */
+.page--left {
+  background-image: url("../img/backdrop.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 /* -------------------------------------------------- 左页：好友头像 */
 
 /* 左页底部氛围：一层暖光 + 几片晕开的淡彩纸屑。
@@ -153,7 +163,7 @@ body.is-locked { overflow: hidden; }
 /* .page__deco 带 z-index:0，按绘制顺序会盖在普通流内容之上，
    左页正文三块必须显式抬起来（同 .plate__head 的处理） */
 .brand,
-.grid,
+.page__scroll,
 .page__foot { position: relative; z-index: 1; }
 
 .brand { padding: 30px 26px 14px; }
@@ -202,22 +212,29 @@ body.is-locked { overflow: hidden; }
   box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
 }
 
-/* 好友头像网格：逸闻纪事式卡片（立绘 + 姓名牌），点击选中 */
-.grid {
+/* 左页整页滚动容器：品牌区 + 网格一起滑动，页脚钉在页底（同照片墙结构） */
+.page__scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 下拉后垫：高度由脚本量出（补齐一屏 + 一段行程），内容不满一屏也能轻拉 */
+.page__fill { display: block; flex: none; height: 0; }
+
+/* 好友头像网格：逸闻纪事式卡片（立绘 + 姓名牌），点击选中 */
+.grid {
+  flex: none;
   padding: 6px 16px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 22px 16px;
   /* 卡片从标题下方就近排起，不留大片头顶空白；
-     下方余白交给 .page__deco 的暖光纸屑垫底。
-     .is-scroll 类保留兼容（脚本溢出时切换），取值与基准一致 */
+     下方余白交给 .page__deco 的暖光纸屑垫底 */
   align-content: start;
 }
-
-.grid.is-scroll { align-content: start; }
 
 .friend {
   position: relative;
@@ -566,15 +583,15 @@ body.is-locked { overflow: hidden; }
 .shot video {
   display: block;
   width: 100%;
-  aspect-ratio: var(--ar, 16 / 9);
+  aspect-ratio: var(--ar, 16 / 10);
   object-fit: cover;
   background: var(--paper-deep);
   filter: contrast(1.04) saturate(0.96);
   transition: filter 0.25s ease;
 }
 
-/* 视频不参与固定画幅：元数据到达前用 contain 留边，
-   避免被 4:3 容器裁掉上下；元数据到达后 JS 按真实比例撑高 */
+/* 视频画幅与照片一致（16:10），用 contain 兜底：
+   万一未来某条视频比例不同，留边而不裁切 */
 .shot--video video {
   object-fit: contain;
   background: #1c1712;
@@ -687,12 +704,48 @@ body.is-locked { overflow: hidden; }
   pointer-events: none;   /* 让点击穿透到遮罩，关掉大图 */
 }
 
+/* 左右切换圆钮：深色半透底 + 淡金箭头，只有一张图时不显示 */
+.lightbox__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(24, 18, 12, 0.55);
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.lightbox__nav:hover { background: rgba(24, 18, 12, 0.8); }
+
+.lightbox__nav:disabled { opacity: 0.25; cursor: default; }
+
+.lightbox__nav--prev { left: max(14px, 2vw); }
+.lightbox__nav--next { right: max(14px, 2vw); }
+
+/* CSS 折线箭头：一道 L 形边框旋转而成 */
+.lightbox__nav i {
+  display: block;
+  width: 11px;
+  height: 11px;
+  margin: 0 auto;
+  border-left: 2px solid rgba(245, 230, 195, 0.9);
+  border-bottom: 2px solid rgba(245, 230, 195, 0.9);
+}
+
+.lightbox__nav--prev i { transform: rotate(45deg); }
+.lightbox__nav--next i { transform: rotate(-135deg); }
+
 /* ---------------------------------------------------------- 滚动条 */
 
-.grid::-webkit-scrollbar,
+.page__scroll::-webkit-scrollbar,
 .plate__grid::-webkit-scrollbar { width: 10px; height: 8px; }
 
-.grid::-webkit-scrollbar-thumb,
+.page__scroll::-webkit-scrollbar-thumb,
 .plate__grid::-webkit-scrollbar-thumb {
   background: rgba(176, 141, 87, 0.34);
   border: 3px solid transparent;
@@ -758,7 +811,7 @@ body.is-locked { overflow: hidden; }
     --mr: 0px !important;
     --mt: 16px !important;
     --my: 26px !important;
-    --ar: 16 / 9 !important;
+    --ar: 16 / 10 !important;
   }
 
   .grid {
@@ -787,6 +840,9 @@ body.is-locked { overflow: hidden; }
 
   .friend__name { padding: 8px 2px 9px; font-size: 16px; }
 
+  /* 手机端放大层只留左右滑动手势，隐藏切换按钮 */
+  .lightbox__nav { display: none; }
+
   .page__foot,
   .plate__foot { padding: 12px 22px 16px; }
 }
@@ -796,4 +852,29 @@ body.is-locked { overflow: hidden; }
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* -------------------------------------------------- 站主小虫 */
+
+/* 站主「小虫」：正方形画框只框住头像——无姓名牌、无卡纸底、无米色衬底，
+   放在品牌区右上角、垂直居中，不占头像网格。
+   尺寸随视口流式缩放、不设上限（.brand 本身已有 position:relative）。
+   悬停上浮要在居中位移的基础上叠加，否则会跳位 */
+.friend--me {
+  position: absolute;
+  top: 50%;
+  right: max(22px, 2vw);
+  width: max(84px, 6vw);
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  transform: translateY(-50%);
+  background: none;
+  box-shadow: 0 2px 6px -2px rgba(92, 77, 66, 0.4);
+}
+
+.friend--me .friend__avatar { background: none; outline: 0; }
+
+.friend--me:hover {
+  transform: translateY(calc(-50% - 3px));
+  box-shadow: 0 6px 14px -4px rgba(92, 77, 66, 0.5);
 }

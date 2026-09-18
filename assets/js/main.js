@@ -12,6 +12,7 @@
   /* ------------------------------------------------------------ 数据 */
 
   var friends = (typeof FRIENDS !== 'undefined' ? FRIENDS : []).slice();
+  var me      = (typeof ME !== 'undefined' ? ME : null);
 
   /* ------------------------------------------------------------ DOM */
 
@@ -30,9 +31,10 @@
 
   /* ---------------------------------------------------------- 状态 */
 
-  var currentId    = null;
-  var gallery      = [];   // 当前好友的图片列表
-  var galleryTitle = '';
+  var currentId       = null;
+  var gallery         = [];   // 当前好友的图片列表
+  var galleryCaptions = [];   // 与 gallery 一一对应的照片标题
+  var galleryTitle    = '';
 
   /* 当前右页的照片墙与自适应函数（换条目时整体换新引用，
      resize 监听只挂一次，始终操作最新的一组） */
@@ -43,6 +45,7 @@
   /* ---------------------------------------------------------- 工具 */
 
   function findFriend(id) {
+    if (me && me.id === id) return me;
     for (var i = 0; i < friends.length; i++) {
       if (friends[i].id === id) return friends[i];
     }
@@ -90,7 +93,7 @@
   /**
    * 规整排版：统一尺寸、统一间距、不旋转、不位移。
    * 所有照片同一宽度、同一行高，像贴整齐的相册页。
-   * 初始画幅用 16:9 兜底（游戏截图常见比例），媒体真实分辨率到达后
+   * 初始画幅统一 16:10 兜底（与现有照片/视频一致），媒体真实分辨率到达后
    * 由 applyNaturalAspect 按各自比例修正，避免长时间裁切。
    * @param {number} order 第几张（0 起）
    * @param {number} total 该好友一共几张
@@ -101,7 +104,7 @@
     el.style.setProperty('--dy',  '0px');
     el.style.setProperty('--sc',  '1');
     el.style.setProperty('--z',   '1');
-    el.style.setProperty('--ar',  '16 / 9');
+    el.style.setProperty('--ar',  '16 / 10');
 
     // 统一宽度：与落叶的相册页同一套排版，等宽两列起排（单张时占列首）
     el.style.setProperty('--w', '38%');
@@ -233,15 +236,24 @@
     });
   }
 
-  /* 条目不满一屏时网格垂直居中；放不下时切回顶部对齐
-     （居中 + 溢出会让上半截滚不回来，见 CSS 里的注释） */
-  var listScrolling = false;
+  /* 主页整页下滑：量品牌区 + 网格的实际高度，写入底部后垫。
+     内容不满一屏时先补齐到整屏、再多垫一段行程，随时都能轻拉往下看 */
+  var scrollEl = document.getElementById('pageScroll');
+  var fillEl   = document.getElementById('pageFill');
 
   function layoutList() {
-    var over = gridEl.scrollHeight - gridEl.clientHeight > 2;
-    if (over === listScrolling) return;
-    listScrolling = over;
-    gridEl.classList.toggle('is-scroll', over);
+    if (!scrollEl || !fillEl) return;
+    fillEl.style.height = '0px';
+
+    var bottom = 0;
+    Array.prototype.forEach.call(scrollEl.children, function (n) {
+      if (n === fillEl) return;
+      bottom = Math.max(bottom, n.offsetTop + n.offsetHeight);
+    });
+
+    var area   = scrollEl.clientHeight;   // 滚动容器自身无内边距
+    var travel = Math.min(300, Math.max(140, Math.round(scrollEl.clientHeight * 0.35)));
+    fillEl.style.height = (Math.max(0, area - bottom) + travel) + 'px';
   }
 
   /* ------------------------------------------ 右页：好友图片小图 */
@@ -296,7 +308,10 @@
         media.setAttribute('playsinline', '');
         media.preload = 'metadata';
         media.alt = f.name + ' 图 ' + (i + 1);
-        // 拿到真实分辨率后按视频自身比例撑高外框
+        // 与照片同一画幅（16:10）：创建即定框，不依赖元数据加载，
+        // 避免元数据迟到时视频退回 16:9 兜底框而显得比照片小
+        media.style.aspectRatio = '16 / 10';
+        // 拿到真实分辨率后仍按视频自身比例修正（当前源即 16:10，无跳变）
         media.addEventListener('loadedmetadata', function () {
           applyNaturalAspect(media, media.videoWidth, media.videoHeight);
         });
@@ -315,10 +330,7 @@
       }
       btn.appendChild(media);
 
-      // caption 只用于全屏放大层标题，照片墙上不再显示小标牌
-      var cap = f.captions && f.captions[i];
-
-      btn.addEventListener('click', function () { openLightbox(src, cap); });
+      btn.addEventListener('click', function () { openLightbox(src); });
 
       shots.appendChild(btn);
     });
@@ -397,8 +409,8 @@
     // 两帧之后布局稳定再量一次（图片带 aspect-ratio，加载前高度就已确定）
     requestAnimationFrame(function () { requestAnimationFrame(layoutShots); });
 
-    // 右页页脚：旅途的收获。字体/分割线样式参考左页 .page__foot
-    plate.appendChild(make('footer', 'plate__foot', '旅途的收获'));
+    // 右页页脚。字体/分割线样式参考左页 .page__foot
+    plate.appendChild(make('footer', 'plate__foot', '世界，充满未解之谜...'));
 
     stageEl.appendChild(plate);
 
@@ -448,9 +460,36 @@
 
   /* -------------------------------------------------- 全屏大图 */
 
-  function openLightbox(src, caption) {
+  /* --- 放大层翻页：照片墙布局不变，在这里补充左右浏览能力 ---
+     PC 端左右圆钮 + 键盘方向键；手机端左右滑动手势（按钮隐藏） */
+
+  var lbIndex = 0;   // 当前放大层显示的是 gallery 里第几张
+
+  function makeNavBtn(cls, label) {
+    var b = make('button', 'lightbox__nav ' + cls);
+    b.type = 'button';
+    b.setAttribute('aria-label', label);
+    b.appendChild(make('i'));
+    return b;
+  }
+
+  var lbPrev = makeNavBtn('lightbox__nav--prev', '上一张');
+  var lbNext = makeNavBtn('lightbox__nav--next', '下一张');
+
+  // 点击按钮不要冒泡到遮罩，否则大图会被顺手关掉
+  lbPrev.addEventListener('click', function (e) { e.stopPropagation(); stepLightbox(-1); });
+  lbNext.addEventListener('click', function (e) { e.stopPropagation(); stepLightbox(1); });
+  lightbox.appendChild(lbPrev);
+  lightbox.appendChild(lbNext);
+
+  /** 按当前 lbIndex 重画放大层（媒体 + 标题 + 按钮状态） */
+  function renderLightbox() {
+    var src = gallery[lbIndex];
     if (!src) return;
+
+    pauseAllVideos(lbMedia);
     lbMedia.textContent = '';
+
     var el;
     if (isVideo(src)) {
       el = make('video');
@@ -465,8 +504,31 @@
       el.alt = galleryTitle;
     }
     lbMedia.appendChild(el);
+
     // 有照片名就显示照片名（如 出土芙蓉），没有则退回好友名
-    lbCap.textContent = caption || galleryTitle;
+    lbCap.textContent = galleryCaptions[lbIndex] || galleryTitle;
+
+    // 只有一张时不显示按钮；到端点时对应按钮置灰
+    var single = gallery.length < 2;
+    lbPrev.hidden = single;
+    lbNext.hidden = single;
+    lbPrev.disabled = lbIndex <= 0;
+    lbNext.disabled = lbIndex >= gallery.length - 1;
+  }
+
+  /** 翻一张：-1 上一张 / +1 下一张，到端点就停 */
+  function stepLightbox(delta) {
+    var next = lbIndex + delta;
+    if (next < 0 || next > gallery.length - 1) return;
+    lbIndex = next;
+    renderLightbox();
+  }
+
+  function openLightbox(src) {
+    if (!src) return;
+    lbIndex = gallery.indexOf(src);
+    if (lbIndex < 0) lbIndex = 0;
+    renderLightbox();
     lightbox.hidden = false;
     document.body.classList.add('is-locked');
   }
@@ -497,9 +559,38 @@
     e.preventDefault();
   }, { passive: false });
 
+  // 手机端左右滑动翻页：横向位移明显大于纵向才算一次，避免误伤上下滑动意图；
+  // 视频区域放行（拖进度条不该翻页）。lightbox 自身 touchmove 已拦掉页面滚动
+  var swipeX = 0, swipeY = 0, swipeId = null;
+
+  lightbox.addEventListener('touchstart', function (e) {
+    if (e.target && e.target.tagName === 'VIDEO') return;
+    var t = e.changedTouches[0];
+    swipeId = t.identifier;
+    swipeX = t.clientX;
+    swipeY = t.clientY;
+  }, { passive: true });
+
+  lightbox.addEventListener('touchend', function (e) {
+    if (swipeId === null) return;
+    var t = null;
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === swipeId) { t = e.changedTouches[i]; break; }
+    }
+    swipeId = null;
+    if (!t) return;
+    var dx = t.clientX - swipeX;
+    var dy = t.clientY - swipeY;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      stepLightbox(dx < 0 ? 1 : -1);   // 往左滑 = 看下一张
+    }
+  });
+
   document.addEventListener('keydown', function (e) {
     if (lightbox.hidden) return;
     if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowLeft') stepLightbox(-1);
+    else if (e.key === 'ArrowRight') stepLightbox(1);
   });
 
   /* ------------------------------------------------------ 返回列表 */
@@ -539,6 +630,14 @@
 
   renderGrid();
   layoutList();
+  // 字体载入会把行高顶一下，稳定后再量一次
+  requestAnimationFrame(function () { requestAnimationFrame(layoutList); });
+
+  // 品牌区右上角的「小虫」形象照卡片：点击进入自己的照片页
+  var meBtn = document.getElementById('meBtn');
+  if (meBtn && me) {
+    meBtn.addEventListener('click', function () { select(me.id, true, true); });
+  }
 
   // 网格容器尺寸一变就重量（窄屏旋转、窗口缩放都走这里）
   if (window.ResizeObserver) {
