@@ -599,19 +599,21 @@
     }
   }
 
-  backBtn.addEventListener('click', function () {
+  /* 收起照片墙回首页：窄屏「返回」、PC「✕」、点击标题「这次又会遇见谁？」共用 */
+  function collapseHome() {
     pauseAllVideos();
     document.body.classList.remove('is-detail');
     if (/^#\/friend\//.test(location.hash)) location.hash = '';
-  });
+  }
 
-  // PC 端「✕ 收起」：与窄屏返回一致，退回单页形象照
-  var closeBtn = document.getElementById('closeBtn');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', function () {
-      pauseAllVideos();
-      document.body.classList.remove('is-detail');
-      if (/^#\/friend\//.test(location.hash)) location.hash = '';
+  backBtn.addEventListener('click', collapseHome);
+
+  // 左页标题「这次又会遇见谁？」：点击回到首页（不真正跳转，平滑收起）
+  var homeLink = document.getElementById('homeLink');
+  if (homeLink) {
+    homeLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      collapseHome();
     });
   }
 
