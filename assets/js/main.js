@@ -107,7 +107,7 @@
     el.style.setProperty('--ar',  '16 / 10');
 
     // 统一宽度：与落叶的相册页同一套排版，等宽两列起排（单张时占列首）
-    el.style.setProperty('--w', '38%');
+    el.style.setProperty('--w', '41%');
 
     // 统一间距：只留正边距，行与行不叠压
     el.style.setProperty('--mt', '14px');
@@ -265,6 +265,7 @@
     // 该条目的图片；没有图片时退回头像，保证右页不会空着
     gallery = (f.images && f.images.length ? f.images.slice() : [avatarOf(f)])
       .filter(Boolean);
+    galleryCaptions = (f.captions || []).slice();
     galleryTitle = f.name;
 
     stageEl.textContent = '';
@@ -338,18 +339,9 @@
 
     plate.appendChild(shots);
 
-    /* --- 滚动提示：照片墙放不下时，页脚一条渐隐"纸边"提示可以下滑 ---
-       hintB = 底边（下面还有），hintT = 顶边（上面被滑走了）
-       两个都挂在 .plate 上而不是滚动容器里，不然会跟着内容一起滚走 */
-    var hintB = make('i', 'plate__hint');
-    var hintT = make('i', 'plate__hint plate__hint--top');
-    plate.appendChild(hintT);
-    plate.appendChild(hintB);
-
     shotsEl = shots;
 
-    /* 布局：量照片实际高度，写入后垫的尺寸。
-       提示（hintB / hintT）挂在 .plate 上而不是滚动容器里，不然会跟着内容一起滚走 */
+    /* 布局：量照片实际高度，写入后垫的尺寸 */
     function layoutShots() {
       if (shotsEl !== shots) return;   // 已经切到别的条目，作废
 
@@ -373,19 +365,14 @@
       var travel = Math.min(300, Math.max(140, Math.round(viewH * 0.35)));
       fill.style.height = (Math.max(0, area - bottom) + travel) + 'px';
 
-      // 4) 顶边渐隐直接贴住页顶（右页已没有姓名页签）
-      hintT.style.top = '0px';
-
       updateHints();
     }
 
-    /* 提示：单独一档，滚动时只更新它，不重量尺寸避免抖动 */
+    /* 滚动档：只更新 is-overflow 与视差，不重量尺寸避免抖动 */
     function updateHints() {
       if (shotsEl !== shots) return;
       var over = shots.scrollHeight - shots.clientHeight > 2;
       shots.classList.toggle('is-overflow', over);
-      hintB.classList.toggle('is-on', over && shots.scrollTop + shots.clientHeight < shots.scrollHeight - 4);
-      hintT.classList.toggle('is-on', over && shots.scrollTop > 4);
 
       // 底衬视差：用独立的 translate 属性，不碰纸片自己的 rotate
       for (var i = 0; i < parEls.length; i++) {
