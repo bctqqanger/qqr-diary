@@ -485,7 +485,6 @@
       select(decodeURIComponent(m[1]), false, true);
     } else {
       document.body.classList.remove('is-detail');
-      greetNames();
     }
   }
 
@@ -814,34 +813,6 @@
     }
   }
 
-  /* 进入/回到形象墙的问候：名字与头顶表情逐卡错峰渐显上升。
-     首次进入在启动区调用，返回经 routeFromHash 首页分支调用；
-     动画播完移除类，名字落在常显态，两端视觉无缝 */
-  var greetTimer = null;
-
-  function greetNames() {
-    if (!gridEl.children.length) return;
-    clearTimeout(greetTimer);
-    Array.prototype.forEach.call(gridEl.children, function (card, i) {
-      var targets = card.querySelectorAll('.friend__name, .friend__bug');
-      Array.prototype.forEach.call(targets, function (el) {
-        el.classList.remove('is-greeting');
-        el.style.animationDelay = (i * 45) + 'ms';
-        void el.offsetWidth;   // 强制重排，保证再次回到首页时动画能重播
-        el.classList.add('is-greeting');
-      });
-    });
-    greetTimer = setTimeout(function () {
-      Array.prototype.forEach.call(
-        gridEl.querySelectorAll('.is-greeting'),
-        function (el) {
-          el.classList.remove('is-greeting');
-          el.style.animationDelay = '';
-        }
-      );
-    }, 1000);
-  }
-
   /* 收起照片墙回首页：窄屏「返回」、PC「✕」、点击标题「这次又会遇见谁？」共用 */
   function collapseHome() {
     pauseAllVideos();
@@ -878,8 +849,6 @@
 
   renderGrid();
   layoutList();
-  // 首次进入形象墙：名字问候动画（此后每次刷新进入/从照片墙返回都会重播）
-  greetNames();
   // 字体载入会把行高顶一下，稳定后再量一次
   requestAnimationFrame(function () { requestAnimationFrame(layoutList); });
 

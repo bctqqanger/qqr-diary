@@ -379,33 +379,6 @@ body.is-locked {
   overflow: visible;
 }
 
-/* 问候动画（name-rise / bug-rise）仅窄屏触摸端使用，规则在下方媒体查询里；
-   PC 端保持默认隐藏 + 悬停浮现，不播问候。keyframes 全局定义（媒体查询内可引用） */
-
-@keyframes name-rise {
-  from {
-    opacity: 0;
-    transform: translate(-50%, calc(-50% + 8px));
-  }
-
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-}
-
-@keyframes bug-rise {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
 .friend:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 14px -4px rgba(92, 77, 66, 0.5);
@@ -969,30 +942,6 @@ body.is-locked {
     bottom: -80px;
     width: 200px;
     height: 200px;
-  }
-}
-
-/* 触摸设备（无悬停能力）：名字与头顶表情（如落叶🍂）常驻显示（同站主🐛逻辑），
-   进入/回到形象墙时 is-greeting 播问候动画（JS 逐卡错峰延迟）。
-   按能力而非宽度区分：有鼠标的 PC（hover: hover）即使窗口再窄也不命中，
-   保持默认隐藏 + 悬停浮现 */
-@media (hover: none) {
-  .friend__name {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-
-  .friend.has-badge .friend__bug {
-    opacity: 1;
-    transform: translateX(-50%);
-  }
-
-  .friend__name.is-greeting {
-    animation: name-rise 0.3s ease both;
-  }
-
-  .friend.has-badge .friend__bug.is-greeting {
-    animation: bug-rise 0.3s ease both;
   }
 }
 
