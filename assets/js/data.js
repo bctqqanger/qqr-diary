@@ -67,6 +67,7 @@ const FRIENDS = [
     id: 'friend-03',
     name: '落叶',
     avatar: 'assets/img/avatars/luoye.jpg',
+    badge: 'assets/img/leaf-apple.png',
     plate: 'assets/img/plate/luoye.jpg',
     note: '占位：落叶。',
     tags: [],
@@ -75,20 +76,16 @@ const FRIENDS = [
       'assets/img/album/luoye-02.jpg',
       'assets/img/album/luoye-03.jpg',
       'assets/img/album/luoye-04.jpg',
-      'assets/img/album/luoye-05.jpg',
-      'assets/img/album/luoye-06.jpg',
-      'assets/img/album/luoye-07.jpg'
+      'assets/img/album/suodi-01.mp4'
     ],
     dims: {
-      'luoye-01.jpg': [1440, 900],
-      'luoye-02.jpg': [1440, 900],
-      'luoye-03.jpg': [1440, 900],
+      'luoye-01.jpg': [1440, 617],
+      'luoye-02.jpg': [1440, 664],
+      'luoye-03.jpg': [1440, 665],
       'luoye-04.jpg': [1440, 665],
-      'luoye-05.jpg': [1440, 664],
-      'luoye-06.jpg': [1440, 617],
-      'luoye-07.jpg': [1440, 665]
+      'suodi-01.mp4': [1728, 1080]
     },
-    captions: ['出土芙蓉', '对望', '那个女孩']
+    captions: []
   },
   {
     id: 'friend-04',

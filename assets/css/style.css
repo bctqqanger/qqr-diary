@@ -291,6 +291,7 @@ body.is-locked {
 .grid {
   flex: none;
   padding: 6px 16px;
+  margin-top: 18px;   /* 除站主外的形象卡片整体稍微下移，离标题远一点 */
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 22px 16px;
@@ -727,6 +728,19 @@ body.is-locked {
   box-shadow: 0 30px 70px -24px rgba(0, 0, 0, 0.85);
   animation: pop 0.24s ease both;
   cursor: zoom-out;
+  /* 缩放/平移走 transform，滚轮与双击有过渡，拖拽时由 is-panning 关掉 */
+  transition: transform 0.22s ease;
+  will-change: transform;
+}
+
+/* 放大态：光标提示可拖拽查看细节 */
+.lightbox__media img.is-zoomed {
+  cursor: grab;
+}
+
+.lightbox__media img.is-panning {
+  cursor: grabbing;
+  transition: none;
 }
 
 /* 视频上允许点击控件（播放/进度条）；pan 手势在不可滚动的视频上无实际效果 */
@@ -753,6 +767,11 @@ body.is-locked {
   color: rgba(255, 248, 226, 0.82);
   pointer-events: none;
   /* 让点击穿透到遮罩，关掉大图 */
+}
+
+/* 无照片名时彻底隐藏，不留空行（图片保持正中） */
+.lightbox__cap:empty {
+  display: none;
 }
 
 /* 左右切换圆钮：深色半透底 + 淡金箭头，只有一张图时不显示 */
@@ -1012,7 +1031,8 @@ body.is-locked {
 }
 
 /* 头顶的 🐛 苹果表情：半重叠在头像上沿（上探 13% = 表情高的一半），
-   尺寸随头像流式缩放；纯装饰不拦截点击 */
+   尺寸随头像流式缩放；纯装饰不拦截点击。
+   好友卡（如落叶 🍂）复用同款类，配合 .has-badge 放开裁切 */
 .friend__bug {
   position: absolute;
   top: -13%;
@@ -1021,6 +1041,11 @@ body.is-locked {
   transform: translateX(-50%);
   pointer-events: none;
   filter: drop-shadow(0 2px 3px rgba(92, 77, 66, 0.35));
+  z-index: 1;
+}
+
+.friend.has-badge {
+  overflow: visible;
 }
 
 /* 去掉内衬金线与书脊；头像本体加大圆角 */

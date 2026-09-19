@@ -200,6 +200,15 @@
       btn.dataset.id = f.id;
       btn.title = f.name;
 
+      // 头顶小表情（如落叶的 🍂）：与站主 🐛 同款半重叠，纯装饰
+      if (f.badge) {
+        var badge = make('img', 'friend__bug');
+        badge.setAttribute('src', f.badge);
+        badge.alt = '';
+        btn.appendChild(badge);
+        btn.classList.add('has-badge');
+      }
+
       var img = make('img', 'friend__avatar');
       img.setAttribute('src', avatarOf(f));
       img.alt = f.name;
@@ -511,8 +520,12 @@
     el.alt = galleryTitle;
     lbMedia.appendChild(el);
 
-    // 有照片名就显示照片名（如 出土芙蓉），没有则退回好友名
-    lbCap.textContent = galleryCaptions[lbIndex] || galleryTitle;
+    // 缩放作用对象换成这张新图，并把上一次的缩放/位移清零
+    lbZoomImg = el;
+    resetZoom();
+
+    // 有照片名就显示照片名（如 出土芙蓉），没有就不显示
+    lbCap.textContent = galleryCaptions[lbIndex] || '';
 
     // 相邻两张原图预取（视频跳过）：翻到时基本秒开
     for (var d = -1; d <= 1; d += 2) {
@@ -553,6 +566,8 @@
   function closeLightbox() {
     lightbox.hidden = true;
     document.body.classList.remove('is-locked');
+    // 缩放状态一并复位，下次打开从原图比例开始
+    resetZoom();
     // 暂停放大层里的视频（点关闭通常是想离开，不该继续放）
     pauseAllVideos(lbMedia);
     lbMedia.textContent = '';
@@ -566,8 +581,114 @@
     }
   }
 
-  // 点击遮罩或媒体本体都关闭大图（caption 已 pointer-events:none，穿透到遮罩）
-  lightbox.addEventListener('click', closeLightbox);
+  /* --- 放大层缩放：滚轮 / 双击 / 双指捏合再放大，放大后可拖拽平移 ---
+     图片始终钉在正中，容器依旧不滚动；翻页或关闭时自动复位 */
+
+  var lbZoom = 1, lbTx = 0, lbTy = 0;   // 当前倍率与位移
+  var lbZoomImg = null;                 // 缩放作用的图片元素
+
+  /** 把当前倍率/位移写回图片（pop 入场动画会锁 transform，缩放前先摘掉） */
+  function applyZoom() {
+    if (!lbZoomImg) return;
+    if (lbZoomImg.style.animation !== 'none') lbZoomImg.style.animation = 'none';
+    lbZoomImg.style.transform =
+      'translate(' + lbTx + 'px, ' + lbTy + 'px) scale(' + lbZoom + ')';
+    lbZoomImg.classList.toggle('is-zoomed', lbZoom > 1);
+  }
+
+  /** 平移限制在放大多出来的那圈空间里，图片拖不出画面 */
+  function clampPan() {
+    var mx = (lbZoom - 1) * lightbox.clientWidth / 2;
+    var my = (lbZoom - 1) * lightbox.clientHeight / 2;
+    lbTx = Math.max(-mx, Math.min(mx, lbTx));
+    lbTy = Math.max(-my, Math.min(my, lbTy));
+  }
+
+  /** 复位：翻页 / 关闭时调用（新图由 renderLightbox 重新指给 lbZoomImg） */
+  function resetZoom() {
+    lbZoom = 1; lbTx = 0; lbTy = 0;
+    if (lbZoomImg) {
+      lbZoomImg.style.transform = '';
+      lbZoomImg.classList.remove('is-zoomed', 'is-panning');
+    }
+  }
+
+  /** 以某点（客户区坐标）为不动点缩放到指定倍率，PC 滚轮/双击、手机捏合共用 */
+  function zoomTo(clientX, clientY, target) {
+    var next = Math.max(1, Math.min(5, target));
+    if (next === lbZoom) return;
+    // 保持指点不动：t2 = p − (p − t1)·k（p 为该点相对视口中心的偏移）
+    var px = clientX - lightbox.clientWidth / 2;
+    var py = clientY - lightbox.clientHeight / 2;
+    var k = next / lbZoom;
+    lbTx = px - (px - lbTx) * k;
+    lbTy = py - (py - lbTy) * k;
+    lbZoom = next;
+    if (lbZoom === 1) { lbTx = 0; lbTy = 0; }
+    clampPan();
+    applyZoom();
+  }
+
+  // 滚轮缩放（PC）：容器本身永不滚动，滚轮全部喂给缩放
+  lightbox.addEventListener('wheel', function (e) {
+    if (lightbox.hidden) return;
+    if (e.target && e.target.tagName === 'VIDEO') return;
+    e.preventDefault();
+    zoomTo(e.clientX, e.clientY, lbZoom * (e.deltaY < 0 ? 1.2 : 1 / 1.2));
+  }, { passive: false });
+
+  // 鼠标拖拽平移（放大后）：按下拖动看细节
+  var panOffX = 0, panOffY = 0, panning = false, panMoved = false;
+
+  lightbox.addEventListener('mousedown', function (e) {
+    if (lightbox.hidden || lbZoom <= 1) return;
+    if (e.target && e.target.tagName === 'VIDEO') return;
+    panning = true;
+    panMoved = false;
+    panOffX = e.clientX - lbTx;
+    panOffY = e.clientY - lbTy;
+    if (lbZoomImg) lbZoomImg.classList.add('is-panning');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    if (!panning) return;
+    lbTx = e.clientX - panOffX;
+    lbTy = e.clientY - panOffY;
+    clampPan();
+    panMoved = true;
+    applyZoom();
+  });
+
+  document.addEventListener('mouseup', function () {
+    if (!panning) return;
+    panning = false;
+    if (lbZoomImg) lbZoomImg.classList.remove('is-panning');
+  });
+
+  // 单击关闭与双击缩放共存：单击延迟一小段才关，双击的第二次点击会取消它
+  var closeTimer = null;
+
+  lightbox.addEventListener('click', function (e) {
+    if (lightbox.hidden) return;
+    if (panMoved) { panMoved = false; return; }   // 拖拽平移后的松手不算点击
+    if (e.detail > 1) return;                     // 双击的第二次点击，交给 dblclick
+    if (e.target && e.target.tagName === 'VIDEO') return;
+    if (closeTimer) clearTimeout(closeTimer);
+    closeTimer = setTimeout(closeLightbox, 260);
+  });
+
+  lightbox.addEventListener('dblclick', function (e) {
+    if (lightbox.hidden) return;
+    if (e.target && e.target.tagName === 'VIDEO') return;
+    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+    if (lbZoom > 1) {
+      resetZoom();
+      applyZoom();
+    } else {
+      zoomTo(e.clientX, e.clientY, 2.5);
+    }
+  });
 
   // 放大层里禁止上下/左右滑动（含旧 iOS WebView 对 touch-action 支持不全的情况）。
   // 视频区域放行：拖动进度条等控件操作不应被拦；视频本身不可滚动，放行也不会带跑页面。
@@ -576,19 +697,74 @@
     e.preventDefault();
   }, { passive: false });
 
-  // 手机端左右滑动翻页：横向位移明显大于纵向才算一次，避免误伤上下滑动意图；
+  // 手机端手势：单指在原图态 = 左右滑翻页；放大态 = 拖动平移；双指 = 捏合缩放。
   // 视频区域放行（拖进度条不该翻页）。lightbox 自身 touchmove 已拦掉页面滚动
   var swipeX = 0, swipeY = 0, swipeId = null;
+  var pinchDist = 0, pinchZoom = 1, pinching = false;
+  var panOffTX = 0, panOffTY = 0, touchPanned = false;
+
+  /** 两指间距（捏合缩放用） */
+  function touchDist(e) {
+    var dx = e.touches[0].clientX - e.touches[1].clientX;
+    var dy = e.touches[0].clientY - e.touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
 
   lightbox.addEventListener('touchstart', function (e) {
+    if (lightbox.hidden) return;
     if (e.target && e.target.tagName === 'VIDEO') return;
-    var t = e.changedTouches[0];
+    if (e.touches.length === 2) {
+      // 双指进入捏合，同时取消本次翻页判定
+      pinching = true;
+      swipeId = null;
+      pinchDist = touchDist(e);
+      pinchZoom = lbZoom;
+      if (lbZoomImg) lbZoomImg.classList.remove('is-panning');
+      return;
+    }
+    if (e.touches.length !== 1) return;
+    var t = e.touches[0];
     swipeId = t.identifier;
     swipeX = t.clientX;
     swipeY = t.clientY;
+    if (lbZoom > 1) {   // 放大态单指 = 平移
+      touchPanned = false;
+      panOffTX = lbTx - t.clientX;
+      panOffTY = lbTy - t.clientY;
+      if (lbZoomImg) lbZoomImg.classList.add('is-panning');
+    }
   }, { passive: true });
 
+  lightbox.addEventListener('touchmove', function (e) {
+    if (lightbox.hidden) return;
+    if (e.target && e.target.tagName === 'VIDEO') return;
+    e.preventDefault();
+    if (pinching && e.touches.length === 2) {
+      var d = touchDist(e);
+      if (pinchDist > 0 && d > 0) {
+        var midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        var midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        zoomTo(midX, midY, pinchZoom * d / pinchDist);
+      }
+      return;
+    }
+    if (lbZoom > 1 && swipeId !== null && e.touches.length === 1) {
+      var t = e.touches[0];
+      lbTx = t.clientX + panOffTX;
+      lbTy = t.clientY + panOffTY;
+      clampPan();
+      touchPanned = true;
+      applyZoom();
+    }
+  }, { passive: false });
+
   lightbox.addEventListener('touchend', function (e) {
+    if (pinching) {
+      if (e.touches.length < 2) { pinching = false; pinchDist = 0; }
+      if (e.touches.length === 0) swipeId = null;
+      return;
+    }
+    if (lbZoomImg) lbZoomImg.classList.remove('is-panning');
     if (swipeId === null) return;
     var t = null;
     for (var i = 0; i < e.changedTouches.length; i++) {
@@ -596,6 +772,8 @@
     }
     swipeId = null;
     if (!t) return;
+    if (touchPanned) { touchPanned = false; return;   // 平移过就不翻页
+    }
     var dx = t.clientX - swipeX;
     var dy = t.clientY - swipeY;
     if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
