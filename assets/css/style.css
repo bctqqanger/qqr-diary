@@ -6,30 +6,37 @@
    ========================================================================== */
 
 :root {
-  --ivory:      #fffff0;
-  --paper:      #f7efdd;
-  --paper-2:    #f1e6cd;
+  --ivory: #fffff0;
+  --paper: #f7efdd;
+  --paper-2: #f1e6cd;
   --paper-deep: #e3d5b6;
-  --gold:       #d4af37;
-  --gold-soft:  #e5c96f;
-  --copper:     #b08d57;
-  --text:       #5c4d42;
-  --text-soft:  #8b7a66;
-  --ink:        #3d322a;
-  --line:       rgba(176, 141, 87, 0.35);
-  --line-soft:  rgba(176, 141, 87, 0.18);
-  --shadow:     rgba(92, 77, 66, 0.14);
+  --gold: #d4af37;
+  --gold-soft: #e5c96f;
+  --copper: #b08d57;
+  --text: #5c4d42;
+  --text-soft: #8b7a66;
+  --ink: #3d322a;
+  --line: rgba(176, 141, 87, 0.35);
+  --line-soft: rgba(176, 141, 87, 0.18);
+  --shadow: rgba(92, 77, 66, 0.14);
 
   --serif: "Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", Georgia, serif;
   --sans: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body { height: 100%; }
+html,
+body {
+  height: 100%;
+}
 
 /* PC 首页态书本右移，空盒会探出视口右侧，横向溢出一律裁掉 */
-html { overflow-x: hidden; }
+html {
+  overflow-x: hidden;
+}
 
 body {
   margin: 0;
@@ -40,10 +47,13 @@ body {
   color: var(--text);
   font-family: var(--sans);
   font-size: 16px;
-  background: #241d18;   /* 兜底，真正的背景是 .backdrop */
+  background: #241d18;
+  /* 兜底，真正的背景是 .backdrop */
 }
 
-body.is-locked { overflow: hidden; }
+body.is-locked {
+  overflow: hidden;
+}
 
 /* ------------------------------------------------- 虚化背景（书外） */
 
@@ -68,7 +78,9 @@ body.is-locked { overflow: hidden; }
   will-change: opacity;
 }
 
-.backdrop__img.is-on { opacity: 1; }
+.backdrop__img.is-on {
+  opacity: 1;
+}
 
 /* 压暗四周，让中间的"书"浮起来 */
 .backdrop__veil {
@@ -84,6 +96,9 @@ body.is-locked { overflow: hidden; }
 .book {
   position: relative;
   z-index: 1;
+  /* 整书按 90% 显示（等比缩小，文字依旧清晰）；
+     手机/平板端在下方媒体查询里恢复 100%，避免撑不满屏幕 */
+  zoom: 0.9;
   display: grid;
   /* 左页 : 右页 = 4 : 6 */
   grid-template-columns: 4fr 6fr;
@@ -150,9 +165,32 @@ body.is-locked { overflow: hidden; }
   box-shadow: none;
 }
 
-.page__deco .scrap:nth-of-type(1) { --tone: #dbe8f6; --x: 4%;  --y: 70%; --sw: 40%; --sh: 15%; --rot: -8deg; }
-.page__deco .scrap:nth-of-type(2) { --tone: #f7dfe2; --x: 54%; --y: 78%; --sw: 42%; --sh: 13%; --rot: 6deg; }
-.page__deco .scrap:nth-of-type(3) { --tone: #f6eec6; --x: 16%; --y: 88%; --sw: 46%; --sh: 16%; --rot: 3deg; }
+.page__deco .scrap:nth-of-type(1) {
+  --tone: #dbe8f6;
+  --x: 4%;
+  --y: 70%;
+  --sw: 40%;
+  --sh: 15%;
+  --rot: -8deg;
+}
+
+.page__deco .scrap:nth-of-type(2) {
+  --tone: #f7dfe2;
+  --x: 54%;
+  --y: 78%;
+  --sw: 42%;
+  --sh: 13%;
+  --rot: 6deg;
+}
+
+.page__deco .scrap:nth-of-type(3) {
+  --tone: #f6eec6;
+  --x: 16%;
+  --y: 88%;
+  --sw: 46%;
+  --sh: 16%;
+  --rot: 3deg;
+}
 
 .page__deco .sun {
   left: auto;
@@ -167,9 +205,14 @@ body.is-locked { overflow: hidden; }
    左页正文三块必须显式抬起来（同 .plate__head 的处理） */
 .brand,
 .page__scroll,
-.page__foot { position: relative; z-index: 1; }
+.page__foot {
+  position: relative;
+  z-index: 1;
+}
 
-.brand { padding: 44px 26px 14px; }
+.brand {
+  padding: 44px 26px 14px;
+}
 
 .brand__title {
   margin: 0;
@@ -195,7 +238,9 @@ body.is-locked { overflow: hidden; }
   text-decoration: none;
 }
 
-.brand__title a:hover { color: var(--copper); }
+.brand__title a:hover {
+  color: var(--copper);
+}
 
 .brand__sub {
   margin: 11px 0 0;
@@ -213,7 +258,10 @@ body.is-locked { overflow: hidden; }
   color: var(--text-soft);
 }
 
-.brand__stat b { color: var(--copper); font-weight: 600; }
+.brand__stat b {
+  color: var(--copper);
+  font-weight: 600;
+}
 
 .brand__mark {
   width: 7px;
@@ -233,7 +281,11 @@ body.is-locked { overflow: hidden; }
 }
 
 /* 下拉后垫：高度由脚本量出（补齐一屏 + 一段行程），内容不满一屏也能轻拉 */
-.page__fill { display: block; flex: none; height: 0; }
+.page__fill {
+  display: block;
+  flex: none;
+  height: 0;
+}
 
 /* 好友头像网格：逸闻纪事式卡片（立绘 + 姓名牌），点击选中 */
 .grid {
@@ -252,49 +304,23 @@ body.is-locked { overflow: hidden; }
   display: flex;
   flex-direction: column;
   width: 100%;
-  aspect-ratio: 3 / 4;
-  /* 内容整体内缩，把位置让给外面那圈细画框 */
-  padding: 9.5% 10.5% 7.5%;
+  aspect-ratio: 1 / 1;
+  /* 与站主形象照同款：纯头像直出，无纸底无内衬无书脊 */
+  padding: 0;
   gap: 0;
   border: 0;
-  border-radius: 3px;
+  border-radius: 12%;
   overflow: hidden;
   cursor: pointer;
-  /* 米白卡纸底：左上柔光 + 极细噪点 */
-  background-color: #f0eae1;
-  background-image:
-    radial-gradient(ellipse at 30% 10%, rgba(255, 255, 255, 0.6) 0%, transparent 58%),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.36  0 0 0 0 0.30  0 0 0 0 0.21  0 0 0 0.075 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  background-size: auto, 120px 120px;
-  box-shadow:
-    inset 0  1px 0 rgba(255, 255, 255, 0.85),
-    0 1px 2px rgba(92, 77, 66, 0.2),
-    0 5px 12px -5px rgba(92, 77, 66, 0.34),
-    0 14px 26px -12px rgba(92, 77, 66, 0.4);
+  background: none;
+  box-shadow: 0 2px 6px -2px rgba(92, 77, 66, 0.4);
   transition: box-shadow 0.22s ease, transform 0.22s ease;
 }
 
-/* 画框：一道细描边 + 四角小铆钉 */
-.friend::before {
-  content: "";
-  position: absolute;
-  inset: 4%;
-  z-index: 3;
-  border: 1px solid rgba(176, 141, 87, 0.66);
-  border-radius: 4px;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle at 50% 50%, #b99a5c 0 0.9px, rgba(185, 154, 92, 0.55) 1px 1.7px, rgba(185, 154, 92, 0) 2.2px),
-    radial-gradient(circle at 50% 50%, #b99a5c 0 0.9px, rgba(185, 154, 92, 0.55) 1px 1.7px, rgba(185, 154, 92, 0) 2.2px),
-    radial-gradient(circle at 50% 50%, #b99a5c 0 0.9px, rgba(185, 154, 92, 0.55) 1px 1.7px, rgba(185, 154, 92, 0) 2.2px),
-    radial-gradient(circle at 50% 50%, #b99a5c 0 0.9px, rgba(185, 154, 92, 0.55) 1px 1.7px, rgba(185, 154, 92, 0) 2.2px);
-  background-size: 6px 6px;
-  background-repeat: no-repeat;
-  background-position:
-    -3px -3px,
-    calc(100% + 3px) -3px,
-    -3px calc(100% + 3px),
-    calc(100% + 3px) calc(100% + 3px);
+/* 内衬金线与书脊一并撤掉（站主卡片无此装饰） */
+.friend::before,
+.friend::after {
+  display: none;
 }
 
 .friend__avatar {
@@ -302,68 +328,39 @@ body.is-locked { overflow: hidden; }
   flex: 1 1 0;
   min-height: 0;
   width: 100%;
-  /* 立绘区：米色底，四周一道极淡的边线 */
-  background: #e3d0b1;
-  outline: 1px solid rgba(120, 92, 52, 0.14);
-  outline-offset: -1px;
+  border-radius: 12%;
+  background: none;
+  box-shadow: none;
   object-fit: cover;
   filter: saturate(0.98);
   transition: filter 0.25s ease;
 }
 
-/* 姓名牌：卡纸本色，上下各一道短横线，姓名居中 */
+/* 姓名牌整体收起：与站主卡片一致，仅头像直出 */
 .friend__name {
-  position: relative;
-  flex: none;
-  padding: 8px 2px 9px;
-  font-family: var(--sans);
-  font-size: 13.5px;
-  font-weight: 700;
-  line-height: 1.18;
-  letter-spacing: 0.075em;
-  text-align: center;
-  color: #6b5b52;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
-  /* 上下各一条两端留白的细线，像手绘的标签框 */
-  background-image:
-    linear-gradient(90deg, transparent 0, rgba(176, 141, 87, 0.5) 10%, rgba(176, 141, 87, 0.5) 90%, transparent 100%),
-    linear-gradient(90deg, transparent 0, rgba(176, 141, 87, 0.5) 10%, rgba(176, 141, 87, 0.5) 90%, transparent 100%);
-  background-size: 100% 1px;
-  background-position: 0 4px, 0 calc(100% - 4px);
-  background-repeat: no-repeat;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none;
 }
 
 .friend:hover {
   transform: translateY(-3px);
-  box-shadow:
-    inset 0  1px 0 rgba(255, 255, 255, 0.9),
-    0 2px 4px rgba(92, 77, 66, 0.2),
-    0 10px 20px -6px rgba(92, 77, 66, 0.4),
-    0 22px 38px -14px rgba(92, 77, 66, 0.45);
+  box-shadow: 0 6px 14px -4px rgba(92, 77, 66, 0.5);
 }
 
-.friend:hover .friend__avatar { filter: saturate(1.04) brightness(1.03); }
+.friend:hover .friend__avatar {
+  filter: saturate(1.04) brightness(1.03);
+}
 
-.friend:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.friend:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 
-/* 选中：画框换成金色 + 一层柔光 */
+/* 选中：一圈金色柔光（同站主卡片语言） */
 .friend.is-active {
   box-shadow:
-    inset 0  1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 2px rgba(212, 175, 55, 0.4),
+    0 0 0 2px rgba(212, 175, 55, 0.5),
     0 0 16px rgba(212, 175, 55, 0.42),
-    0 6px 14px -4px rgba(92, 77, 66, 0.4),
-    0 18px 32px -14px rgba(92, 77, 66, 0.45);
-}
-
-.friend.is-active::before {
-  border-color: var(--gold);
-  box-shadow:
-    0 0 0 1px rgba(212, 175, 55, 0.25),
-    0 0 10px rgba(212, 175, 55, 0.55);
+    0 6px 14px -4px rgba(92, 77, 66, 0.4);
 }
 
 /* 页脚：一条居中的短线 + 居中小字，像书末的版权行 */
@@ -376,6 +373,11 @@ body.is-locked { overflow: hidden; }
   color: var(--text-soft);
 }
 
+/* 形象墙页脚：比右页照片墙页脚加深一档，用正文色 */
+.page__foot {
+  color: var(--text);
+}
+
 .page__foot::before,
 .plate__foot::before {
   content: "";
@@ -384,7 +386,7 @@ body.is-locked { overflow: hidden; }
   height: 1px;
   margin: 0 auto 11px;
   background: linear-gradient(90deg,
-    rgba(176, 141, 87, 0), rgba(176, 141, 87, 0.5), rgba(176, 141, 87, 0));
+      rgba(176, 141, 87, 0), rgba(176, 141, 87, 0.5), rgba(176, 141, 87, 0));
 }
 
 /* 右页页脚要在 .plate__deco 之上、且不随照片墙滚动 */
@@ -470,8 +472,8 @@ body.is-locked { overflow: hidden; }
   border-radius: 50%;
   opacity: 0.5;
   background: repeating-conic-gradient(from 0deg,
-    rgba(246, 209, 118, 0.42) 0deg 5deg,
-    rgba(246, 209, 118, 0) 5deg 24deg);
+      rgba(246, 209, 118, 0.42) 0deg 5deg,
+      rgba(246, 209, 118, 0) 5deg 24deg);
   -webkit-mask: radial-gradient(circle, transparent 34%, #000 38%, #000 50%, transparent 82%);
   mask: radial-gradient(circle, transparent 34%, #000 38%, #000 50%, transparent 82%);
 }
@@ -508,8 +510,15 @@ body.is-locked { overflow: hidden; }
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* 照片墙：照片像贴在纸上一样摆放
@@ -524,15 +533,36 @@ body.is-locked { overflow: hidden; }
   padding: 40px 12px 62px 30px;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;   /* 每行照片整体居中；配合右小左大的内距，右缘留白更小 */
+  justify-content: center;
+  /* 每行照片整体居中；配合右小左大的内距，右缘留白更小 */
   align-items: flex-start;
   align-content: center;
+}
+
+/* PC 端双列瀑布流（masonry 条目，当前仅小虫）：两列各自独立堆叠，
+   长图只撑自己那列，对面列的照片上移贴齐，不再留行间空白 */
+@media (min-width: 1041px) {
+  .plate__grid--cols {
+    column-gap: 4%;
+  }
+
+  .plate__grid--cols .plate__col {
+    width: 41%;
+    min-width: 0;
+  }
+
+  .plate__grid--cols .shot {
+    width: 100%;
+    margin: 0 0 26px;
+  }
 }
 
 /* 照片一律顶部对齐：后垫保证内容总略超一屏，is-overflow 恒开，
    这里仅作保险（align-content: center 在内容超高时会把上半截顶出
    滚动区且滚不回来，flex 经典坑） */
-.plate__grid.is-overflow { align-content: flex-start; }
+.plate__grid.is-overflow {
+  align-content: flex-start;
+}
 
 /* 滚动占位：内容下面一个看不见的垫子（由脚本量好高度写入），
    永远垫出一段余量，保证右页任何情况下都能下滑——哪怕一张照片都没有 */
@@ -542,6 +572,20 @@ body.is-locked { overflow: hidden; }
   width: 100%;
   height: 0;
   margin: 0;
+  pointer-events: none;
+}
+
+/* 空条目占位：右页一张照片都没有时显示一句轻文案，
+   免得整页空白像加载失败。不算内容高度，页脚垫片照常工作 */
+.plate__empty {
+  flex: none;
+  width: 100%;
+  margin: 0;
+  padding: 16vh 20px 0;
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--text-soft);
   pointer-events: none;
 }
 
@@ -584,9 +628,14 @@ body.is-locked { overflow: hidden; }
 }
 
 .shot:hover img,
-.shot:hover video { filter: contrast(1.04) saturate(1.02) brightness(1.03); }
+.shot:hover video {
+  filter: contrast(1.04) saturate(1.02) brightness(1.03);
+}
 
-.shot:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.shot:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 
 /* -------------------------------------------------- 窄屏返回 */
 
@@ -618,21 +667,32 @@ body.is-locked { overflow: hidden; }
   display: grid;
   place-items: center;
   padding: 20px;
-  overflow: hidden;             /* 放大层自身绝不滚动，图片始终钉在正中 */
-  touch-action: none;           /* 手机端禁止触摸滑动 / 下拉滚动穿透 */
+  overflow: hidden;
+  /* 放大层自身绝不滚动，图片始终钉在正中 */
+  touch-action: none;
+  /* 手机端禁止触摸滑动 / 下拉滚动穿透 */
   overscroll-behavior: contain;
   background: rgba(18, 13, 9, 0.94);
   backdrop-filter: blur(7px);
   animation: fade 0.2s ease both;
 }
 
-[hidden] { display: none !important; }
+[hidden] {
+  display: none !important;
+}
 
-.lightbox[hidden] { display: none; }
+.lightbox[hidden] {
+  display: none;
+}
 
 @keyframes fade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .lightbox__figure {
@@ -670,11 +730,20 @@ body.is-locked { overflow: hidden; }
 }
 
 /* 视频上允许点击控件（播放/进度条）；pan 手势在不可滚动的视频上无实际效果 */
-.lightbox__media video { touch-action: manipulation; }
+.lightbox__media video {
+  touch-action: manipulation;
+}
 
 @keyframes pop {
-  from { opacity: 0; transform: scale(0.97); }
-  to   { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .lightbox__cap {
@@ -682,7 +751,8 @@ body.is-locked { overflow: hidden; }
   font-size: 14px;
   letter-spacing: 0.06em;
   color: rgba(255, 248, 226, 0.82);
-  pointer-events: none;   /* 让点击穿透到遮罩，关掉大图 */
+  pointer-events: none;
+  /* 让点击穿透到遮罩，关掉大图 */
 }
 
 /* 左右切换圆钮：深色半透底 + 淡金箭头，只有一张图时不显示 */
@@ -701,12 +771,22 @@ body.is-locked { overflow: hidden; }
   transition: background 0.2s ease, opacity 0.2s ease;
 }
 
-.lightbox__nav:hover { background: rgba(24, 18, 12, 0.8); }
+.lightbox__nav:hover {
+  background: rgba(24, 18, 12, 0.8);
+}
 
-.lightbox__nav:disabled { opacity: 0.25; cursor: default; }
+.lightbox__nav:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
 
-.lightbox__nav--prev { left: max(14px, 2vw); }
-.lightbox__nav--next { right: max(14px, 2vw); }
+.lightbox__nav--prev {
+  left: max(14px, 2vw);
+}
+
+.lightbox__nav--next {
+  right: max(14px, 2vw);
+}
 
 /* CSS 折线箭头：一道 L 形边框旋转而成 */
 .lightbox__nav i {
@@ -718,13 +798,21 @@ body.is-locked { overflow: hidden; }
   border-bottom: 2px solid rgba(245, 230, 195, 0.9);
 }
 
-.lightbox__nav--prev i { transform: rotate(45deg); }
-.lightbox__nav--next i { transform: rotate(-135deg); }
+.lightbox__nav--prev i {
+  transform: rotate(45deg);
+}
+
+.lightbox__nav--next i {
+  transform: rotate(-135deg);
+}
 
 /* ---------------------------------------------------------- 滚动条 */
 
 .page__scroll::-webkit-scrollbar,
-.plate__grid::-webkit-scrollbar { width: 10px; height: 8px; }
+.plate__grid::-webkit-scrollbar {
+  width: 10px;
+  height: 8px;
+}
 
 .page__scroll::-webkit-scrollbar-thumb,
 .plate__grid::-webkit-scrollbar-thumb {
@@ -738,13 +826,16 @@ body.is-locked { overflow: hidden; }
 
 /* 窄屏：书合上只剩一页，头像网格与图片页互相覆盖切换 */
 @media (max-width: 1040px) {
-  body { padding: 2vh 3vw; }
+  body {
+    padding: 2vh 3vw;
+  }
 
   .book {
     grid-template-columns: 1fr;
     width: min(620px, 94vw);
     height: min(880px, 94vh);
     border-radius: 6px 10px 10px 6px;
+    zoom: 1;
   }
 
   /* 单页时页面只有一栏宽，卡片按 92px 起排会挤成一小撮（一屏五列小卡），
@@ -754,7 +845,9 @@ body.is-locked { overflow: hidden; }
     padding: 4px 16px;
   }
 
-  .page--left { z-index: 2; }
+  .page--left {
+    z-index: 2;
+  }
 
   .page--right {
     position: absolute;
@@ -770,14 +863,30 @@ body.is-locked { overflow: hidden; }
     visibility: visible;
   }
 
-  body.is-detail .backbtn { display: flex; }
+  body.is-detail .backbtn {
+    display: flex;
+  }
 
   /* 顶部让开左上角固定的「返回」按钮（top:14px + 按钮高约 36px） */
-  .plate__grid { padding: 66px 18px 54px; }
+  .plate__grid {
+    padding: 66px 18px 54px;
+  }
 
-  .shot:hover { transform: rotate(0deg) translate(var(--dx, 0px), -4px) scale(var(--sc, 1)); }
+  /* 瀑布流列容器在窄屏摊平：照片回到默认的流式换行布局，与原来一致 */
+  .plate__grid--cols .plate__col {
+    display: contents;
+  }
 
-  .sun { left: -80px; bottom: -80px; width: 200px; height: 200px; }
+  .shot:hover {
+    transform: rotate(0deg) translate(var(--dx, 0px), -4px) scale(var(--sc, 1));
+  }
+
+  .sun {
+    left: -80px;
+    bottom: -80px;
+    width: 200px;
+    height: 200px;
+  }
 }
 
 /* 手机：照片墙改单列大图——手机是主要浏览场景，
@@ -786,8 +895,8 @@ body.is-locked { overflow: hidden; }
    窗口跨档位缩放时无需重新渲染即生效 */
 @media (max-width: 620px) {
   .shot {
-    --w:  88% !important;
-    --ml: 6%  !important;
+    --w: 88% !important;
+    --ml: 6% !important;
     --mr: 0px !important;
     --mt: 16px !important;
     --my: 26px !important;
@@ -803,28 +912,30 @@ body.is-locked { overflow: hidden; }
 
   /* 手机端形象照去掉画框（细描边 + 四角铆钉），
      只留卡纸与轻投影；选中靠金色光晕辨识 */
-  .friend { padding: 4% 5% 3%; }
-  .friend::before { display: none; }
-
   .friend.is-active {
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.9),
       0 0 0 2px rgba(212, 175, 55, 0.5),
       0 0 16px rgba(212, 175, 55, 0.42),
       0 6px 14px -4px rgba(92, 77, 66, 0.4);
   }
 
-  .brand { padding: 26px 22px 12px; }
+  .brand {
+    padding: 26px 22px 12px;
+  }
 
-  .brand__title { font-size: 22px; }
-
-  .friend__name { padding: 8px 2px 9px; font-size: 16px; }
+  .brand__title {
+    font-size: 22px;
+  }
 
   /* 手机端放大层只留左右滑动手势，隐藏切换按钮 */
-  .lightbox__nav { display: none; }
+  .lightbox__nav {
+    display: none;
+  }
 
   .page__foot,
-  .plate__foot { padding: 12px 22px 16px; }
+  .plate__foot {
+    padding: 12px 22px 16px;
+  }
 }
 
 /* PC 端（>1040px）：打开网站只展示左页形象照、单页居中；
@@ -871,7 +982,10 @@ body.is-locked { overflow: hidden; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
@@ -890,7 +1004,8 @@ body.is-locked { overflow: hidden; }
   width: max(84px, 6vw);
   aspect-ratio: 1 / 1;
   padding: 0;
-  overflow: visible;   /* 让头顶的 🐛 一半探出画外不被裁切 */
+  overflow: visible;
+  /* 让头顶的 🐛 一半探出画外不被裁切 */
   transform: translateY(-50%);
   background: none;
   box-shadow: 0 2px 6px -2px rgba(92, 77, 66, 0.4);
@@ -908,13 +1023,21 @@ body.is-locked { overflow: hidden; }
   filter: drop-shadow(0 2px 3px rgba(92, 77, 66, 0.35));
 }
 
-/* 去掉金丝画框与四角铆钉；头像本体加大圆角 */
-.friend--me::before { display: none; }
+/* 去掉内衬金线与书脊；头像本体加大圆角 */
+.friend--me::before,
+.friend--me::after {
+  display: none;
+}
 
 .friend--me,
-.friend--me .friend__avatar { border-radius: 12%; }
+.friend--me .friend__avatar {
+  border-radius: 12%;
+}
 
-.friend--me .friend__avatar { background: none; outline: 0; }
+.friend--me .friend__avatar {
+  background: none;
+  outline: 0;
+}
 
 .friend--me:hover {
   transform: translateY(calc(-50% - 3px));

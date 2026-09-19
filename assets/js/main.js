@@ -57,6 +57,28 @@
     return /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(src);
   }
 
+  /** 文件名（不含路径）：dims 表按文件名索引 */
+  function baseOf(src) {
+    return src.split('/').pop();
+  }
+
+  /** data.js 里预存的宽高 [w, h]；没写返回 null，交给加载后修正 */
+  function dimsOf(f, src) {
+    var d = f.dims && f.dims[baseOf(src)];
+    return d && d[0] > 0 && d[1] > 0 ? d : null;
+  }
+
+  /** 墙内用缩略图（album/thumb/ 下同名 jpg）；缺失时由 onerror 退回原图。
+      视频不用缩略图，走 poster 首帧 */
+  function wallSrc(src) {
+    return isVideo(src) ? src : src.replace(/([^\/]+)$/, 'thumb/$1');
+  }
+
+  /** 视频 poster：与视频同名、后缀 -poster.jpg；没有该文件就退回黑底 */
+  function posterOf(src) {
+    return src.replace(/\.[^.]+$/, '-poster.jpg');
+  }
+
   /** 头像：优先取 avatar 字段，缺省时用第一张图片（跳过视频，<img> 撑不住视频源） */
   function avatarOf(f) {
     if (f.avatar) return f.avatar;
@@ -132,52 +154,16 @@
     requestAnimationFrame(function () { if (fitShotsFn) fitShotsFn(); });
   }
 
-  /* 页面底衬：几片淡彩纸屑 + 左下暖阳 + 右上气球，纯氛围不抢内容 */
-  var SCRAP_TONES = ['#dbe8f6', '#f7dfe2', '#f6eec6', '#d9ecdd', '#e6e0f4', '#f2e6d4', '#dcecf0', '#f4e3ec', '#e4eef2'];
-
+  /* 页面底衬：整页铺一张底图。默认图为 4 号背景（assets/img/plate/default.jpg），
+     条目自带的 plate（如落叶）优先。浅色蒙版交给 CSS 的 .plate__deco--photo，
+     压住底图保证照片与文字可读 */
   function buildDeco(f) {
-    var seed = f.id;
     var deco = make('div', 'plate__deco');
 
-    // 条目自带底图：整页铺这张图（浅色蒙版交给 CSS），
-    // 纸屑与气球就不再加了，免得和实景图打架。
     // 注意用内联样式赋 URL：外链 CSS 里的相对路径是相对 css 文件解析的，
-    // 内联样式才相对页面，data.js 里写的路径才作数。
-    if (f.plate) {
-      deco.classList.add('plate__deco--photo');
-      deco.style.backgroundImage = 'url("' + f.plate + '")';
-      return deco;
-    }
-
-    // 纸屑铺满整页（顶部让开姓名条那一条）
-    SCRAP_TONES.forEach(function (tone, i) {
-      var s = hash01(seed + 'scrap' + i);
-      var t = hash01(seed + 'scrT' + i);
-      var u = hash01(seed + 'scrU' + i);
-      var v = hash01(seed + 'scrV' + i);
-
-      var scrap = make('i', 'scrap');
-      scrap.style.setProperty('--tone', tone);
-      scrap.style.setProperty('--x',  (2 + s * 76).toFixed(1) + '%');
-      scrap.style.setProperty('--y',  (7 + t * 84).toFixed(1) + '%');
-      scrap.style.setProperty('--sw', (9 + u * 20).toFixed(1) + '%');
-      scrap.style.setProperty('--sh', (5 + v * 12).toFixed(1) + '%');
-      scrap.style.setProperty('--rot', ((s * 2 - 1) * 15).toFixed(2) + 'deg');
-      deco.appendChild(scrap);
-    });
-
-    deco.appendChild(make('i', 'sun'));
-
-    // 两只气球，颜色一蓝一淡紫
-    [['#cfe0f2', 5, 3, 52], ['#e3d9f4', 16, 12, 38]].forEach(function (b, i) {
-      var bal = make('i', 'balloon');
-      bal.style.setProperty('--tone', b[0]);
-      bal.style.setProperty('--y', b[1] + '%');
-      bal.style.setProperty('--x', b[2] + '%');
-      bal.style.setProperty('--bw', b[3] + 'px');
-      deco.appendChild(bal);
-    });
-
+    // 内联样式才相对页面，data.js 里写的路径才作数
+    deco.classList.add('plate__deco--photo');
+    deco.style.backgroundImage = 'url("' + (f.plate || 'assets/img/plate/default.jpg') + '")';
     return deco;
   }
 
@@ -288,6 +274,20 @@
     /* --- 照片墙：错落摆放的小照片，点任意一张才出全屏大图 --- */
     var shots = make('div', 'plate__grid');
 
+    // 双列瀑布流（masonry 条目专用）：两列各自独立堆叠，
+    // 长图只撑自己那列，另一列的照片往上贴，不留行间空白
+    var colL = null;
+    var colR = null;
+    var colHL = 0;   // 两列各自的累计高宽比（h/w）——列宽相同，可当相对高度用
+    var colHR = 0;
+    if (f.masonry && gallery.length > 1) {
+      shots.classList.add('plate__grid--cols');
+      colL = make('div', 'plate__col');
+      colR = make('div', 'plate__col');
+      shots.appendChild(colL);
+      shots.appendChild(colR);
+    }
+
     // 隐形后垫：在内容下面永远垫出约小半页的余量，右页随时都能下滑。
     // 照片一律从页顶排起（与落叶的相册页一致），不做垂直居中
     var fill = make('i', 'plate__fill');
@@ -295,7 +295,11 @@
     gallery.forEach(function (src, i) {
       var btn = make('button', 'shot');
       btn.type = 'button';
-      btn.title = '点击查看大图';
+      // 有照片名（如 出土芙蓉）就让它当按钮说明；没有退回通用文案
+      var cap = (f.captions || [])[i] || '';
+      var alt = cap || (f.name + ' 图 ' + (i + 1));
+      btn.title = cap ? '查看「' + cap + '」' : '点击查看大图';
+      btn.setAttribute('aria-label', alt);
       scatter(btn, f.id + '|' + i + '|' + src, i, gallery.length);
 
       var media;
@@ -303,12 +307,14 @@
         btn.classList.add('shot--video');
         media = make('video');
         media.setAttribute('src', src);
+        // poster 首帧：未播放时显示画面而不是一块黑底
+        media.setAttribute('poster', posterOf(src));
         media.setAttribute('controls', '');
         media.setAttribute('loop', '');
         media.setAttribute('muted', '');
         media.setAttribute('playsinline', '');
         media.preload = 'metadata';
-        media.alt = f.name + ' 图 ' + (i + 1);
+        media.alt = alt;
         // 与照片同一画幅（16:10）：创建即定框，不依赖元数据加载，
         // 避免元数据迟到时视频退回 16:9 兜底框而显得比照片小
         media.style.aspectRatio = '16 / 10';
@@ -318,9 +324,13 @@
         });
       } else {
         media = make('img');
-        media.setAttribute('src', src);
-        media.alt = f.name + ' 图 ' + (i + 1);
+        media.setAttribute('src', wallSrc(src));
+        media.alt = alt;
         media.loading = 'lazy';
+        // 缩略图缺失时退回原图（换过一次就不再换，原图也挂了就不折腾）
+        media.addEventListener('error', function () {
+          if (media.getAttribute('src') !== src) media.setAttribute('src', src);
+        });
         // 图片加载完按自身比例撑高外框；complete 分支兜住缓存命中（load 可能已错过）
         media.addEventListener('load', function () {
           applyNaturalAspect(media, media.naturalWidth, media.naturalHeight);
@@ -331,10 +341,29 @@
       }
       btn.appendChild(media);
 
+      // data.js 预存了真实宽高：建 DOM 即按真实比例定框，加载全程零跳动
+      // （内联 aspect-ratio 压过 .shot 的 --ar 兜底，含手机端 !important 那条）
+      var dd = dimsOf(f, src);
+      if (dd) media.style.aspectRatio = dd[0] + ' / ' + dd[1];
+
       btn.addEventListener('click', function () { openLightbox(src); });
 
-      shots.appendChild(btn);
+      if (colL) {
+        // 按累计高度分列：哪列矮放哪列，两列底部更齐。
+        // 宽高未知的按 16:10 估——全未知时退化为左右轮流，与旧奇偶分列一致
+        var d = dimsOf(f, src);
+        var ratio = d ? d[1] / d[0] : 10 / 16;
+        if (colHL <= colHR) { colL.appendChild(btn); colHL += ratio; }
+        else                { colR.appendChild(btn); colHR += ratio; }
+      } else {
+        shots.appendChild(btn);
+      }
     });
+
+    if (!gallery.length) {
+      // 空条目：给一句占位文案，免得右页像加载失败
+      shots.appendChild(make('div', 'plate__empty', '还没有贴照片，先去别处逛逛吧~'));
+    }
     shots.appendChild(fill);
 
     plate.appendChild(shots);
@@ -484,6 +513,14 @@
 
     // 有照片名就显示照片名（如 出土芙蓉），没有则退回好友名
     lbCap.textContent = galleryCaptions[lbIndex] || galleryTitle;
+
+    // 相邻两张原图预取（视频跳过）：翻到时基本秒开
+    for (var d = -1; d <= 1; d += 2) {
+      var n = lbIndex + d;
+      if (n >= 0 && n < gallery.length && !isVideo(gallery[n])) {
+        (new Image()).src = gallery[n];
+      }
+    }
 
     // 只有一张时不显示按钮；到端点时对应按钮置灰
     var single = gallery.length < 2;

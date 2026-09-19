@@ -15,24 +15,22 @@
    captions 与 images 一一对应的照片标题，点开全屏大图时显示在图片下方；
             留空数组或删掉这个字段，放大层就退回显示好友名
    images  该条目的全部图片
+   dims    可选。图片/视频的真实宽高（键 = images 里的文件名，值 = [宽, 高]）。
+           写了就不等图片下载完、一建 DOM 就按真实比例摆好，加载全程零跳动。
+           新图可以不写，加载后仍会自动修正，只是首屏会有一次小小的撑高
+   墙内缩略图（自动启用，不用配置）：把与原图同名的 jpg 放到
+           assets/img/album/thumb/ 即可；没有缩略图的图自动退回原图。
+           视频 poster：与视频同名、后缀 -poster.jpg（如 guli-01-poster.jpg）
 
    提示：名字与图片均为占位，换成自己的内容即可。
    ========================================================================== */
 
 const FRIENDS = [
   {
-    id: 'friend-01',
-    name: '爱与诚',
-    avatar: 'assets/img/avatars/placeholder.svg',
-    note: '占位：爱与诚。',
-    tags: [],
-    images: [],
-    captions: []
-  },
-  {
     id: 'friend-02',
     name: '陨星',
-    avatar: 'assets/img/avatars/yunxing.png',
+    avatar: 'assets/img/avatars/yunxing.jpg',
+    plate: 'assets/img/plate/yunxing.jpg',
     note: '占位：陨星。',
     tags: [],
     images: [
@@ -40,20 +38,56 @@ const FRIENDS = [
       'assets/img/album/yunxing-02.jpg',
       'assets/img/album/yunxing-03.jpg'
     ],
+    dims: {
+      'yunxing-01.jpg': [1920, 1200],
+      'yunxing-02.jpg': [1920, 1200],
+      'yunxing-03.jpg': [1920, 1200]
+    },
+    captions: []
+  },
+  {
+    id: 'friend-01',
+    name: '爱与诚',
+    avatar: 'assets/img/avatars/aicheng.jpg',
+    note: '占位：爱与诚。',
+    tags: [],
+    images: [
+      'assets/img/album/aicheng-01.jpg',
+      'assets/img/album/aicheng-02.jpg',
+      'assets/img/album/aicheng-03.jpg'
+    ],
+    dims: {
+      'aicheng-01.jpg': [1440, 648],
+      'aicheng-02.jpg': [1440, 648],
+      'aicheng-03.jpg': [1440, 648]
+    },
     captions: []
   },
   {
     id: 'friend-03',
     name: '落叶',
-    avatar: 'assets/img/avatars/luoye.png',
+    avatar: 'assets/img/avatars/luoye.jpg',
     plate: 'assets/img/plate/luoye.jpg',
     note: '占位：落叶。',
     tags: [],
     images: [
       'assets/img/album/luoye-01.jpg',
       'assets/img/album/luoye-02.jpg',
-      'assets/img/album/luoye-03.jpg'
+      'assets/img/album/luoye-03.jpg',
+      'assets/img/album/luoye-04.jpg',
+      'assets/img/album/luoye-05.jpg',
+      'assets/img/album/luoye-06.jpg',
+      'assets/img/album/luoye-07.jpg'
     ],
+    dims: {
+      'luoye-01.jpg': [1440, 900],
+      'luoye-02.jpg': [1440, 900],
+      'luoye-03.jpg': [1440, 900],
+      'luoye-04.jpg': [1440, 665],
+      'luoye-05.jpg': [1440, 664],
+      'luoye-06.jpg': [1440, 617],
+      'luoye-07.jpg': [1440, 665]
+    },
     captions: ['出土芙蓉', '对望', '那个女孩']
   },
   {
@@ -65,6 +99,9 @@ const FRIENDS = [
     images: [
       'assets/img/album/guli-01.mp4'
     ],
+    dims: {
+      'guli-01.mp4': [1280, 800]
+    },
     captions: ['尘世闲游']
   },
   {
@@ -84,11 +121,18 @@ const ME = {
   name: '小虫',
   avatar: 'assets/img/avatars/xiaochong.png',
   note: '站主本人。',
+  masonry: true,   /* PC 端照片墙双列瀑布流：长图只撑自己那列 */
   images: [
     'assets/img/album/xiaochong-01.jpg',
     'assets/img/album/xiaochong-02.jpg',
     'assets/img/album/xiaochong-03.jpg',
     'assets/img/album/xiaochong-04.jpg'
   ],
+  dims: {
+    'xiaochong-01.jpg': [1440, 900],
+    'xiaochong-02.jpg': [664, 1440],
+    'xiaochong-03.jpg': [1440, 900],
+    'xiaochong-04.jpg': [1440, 1080]
+  },
   captions: []
 };
