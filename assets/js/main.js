@@ -215,7 +215,12 @@
       img.loading = 'lazy';
       btn.appendChild(img);
 
-      btn.appendChild(make('span', 'friend__name', f.name));
+      // 名字：带表情的角色（站主🐛/落叶🍂）以表情为名，不渲染文字；
+      // 其余好友默认隐藏，悬停时在卡片上方渐显上升浮现
+      if (!f.badge) {
+        btn.appendChild(make('span', 'friend__name', f.name));
+        btn.classList.add('has-name');
+      }
 
       btn.addEventListener('click', function () { select(f.id, true, true); });
 
@@ -480,6 +485,7 @@
       select(decodeURIComponent(m[1]), false, true);
     } else {
       document.body.classList.remove('is-detail');
+      greetNames();
     }
   }
 
@@ -719,7 +725,9 @@
       swipeId = null;
       pinchDist = touchDist(e);
       pinchZoom = lbZoom;
-      if (lbZoomImg) lbZoomImg.classList.remove('is-panning');
+      // 捏合全程关掉 transform 过渡：每帧直写紧跟手指，
+      // 否则 0.22s 过渡逐帧重启动，画面会「追手」发肉
+      if (lbZoomImg) lbZoomImg.classList.add('is-panning');
       return;
     }
     if (e.touches.length !== 1) return;
@@ -760,7 +768,12 @@
 
   lightbox.addEventListener('touchend', function (e) {
     if (pinching) {
-      if (e.touches.length < 2) { pinching = false; pinchDist = 0; }
+      if (e.touches.length < 2) {
+        pinching = false;
+        pinchDist = 0;
+        // 捏合结束恢复过渡，滚轮/双击等仍有平滑动画（松手瞬间无位移，无感）
+        if (lbZoomImg) lbZoomImg.classList.remove('is-panning');
+      }
       if (e.touches.length === 0) swipeId = null;
       return;
     }
@@ -801,6 +814,34 @@
     }
   }
 
+  /* 进入/回到形象墙的问候：名字与头顶表情逐卡错峰渐显上升。
+     首次进入在启动区调用，返回经 routeFromHash 首页分支调用；
+     动画播完移除类，名字落在常显态，两端视觉无缝 */
+  var greetTimer = null;
+
+  function greetNames() {
+    if (!gridEl.children.length) return;
+    clearTimeout(greetTimer);
+    Array.prototype.forEach.call(gridEl.children, function (card, i) {
+      var targets = card.querySelectorAll('.friend__name, .friend__bug');
+      Array.prototype.forEach.call(targets, function (el) {
+        el.classList.remove('is-greeting');
+        el.style.animationDelay = (i * 45) + 'ms';
+        void el.offsetWidth;   // 强制重排，保证再次回到首页时动画能重播
+        el.classList.add('is-greeting');
+      });
+    });
+    greetTimer = setTimeout(function () {
+      Array.prototype.forEach.call(
+        gridEl.querySelectorAll('.is-greeting'),
+        function (el) {
+          el.classList.remove('is-greeting');
+          el.style.animationDelay = '';
+        }
+      );
+    }, 1000);
+  }
+
   /* 收起照片墙回首页：窄屏「返回」、PC「✕」、点击标题「这次又会遇见谁？」共用 */
   function collapseHome() {
     pauseAllVideos();
@@ -837,6 +878,8 @@
 
   renderGrid();
   layoutList();
+  // 首次进入形象墙：名字问候动画（此后每次刷新进入/从照片墙返回都会重播）
+  greetNames();
   // 字体载入会把行高顶一下，稳定后再量一次
   requestAnimationFrame(function () { requestAnimationFrame(layoutList); });
 

@@ -276,6 +276,11 @@ body.is-locked {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* 横向锁死：裁掉横向溢出、禁掉横向橡皮筋，
+     touch-action 只放行竖向手势——手机上不再左右晃动 */
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
   display: flex;
   flex-direction: column;
 }
@@ -337,9 +342,68 @@ body.is-locked {
   transition: filter 0.25s ease;
 }
 
-/* 姓名牌整体收起：与站主卡片一致，仅头像直出 */
+/* 姓名：PC 端默认藏起，悬停卡片时在卡片上方（虫表情同一位置）渐显上升浮现；
+   窄屏触摸端在媒体查询里常驻显示，并由 is-greeting 播问候动画 */
 .friend__name {
-  display: none;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 2;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  /* 墨色渐变字，直接浮在纸面上，无纸底 */
+  background-image: linear-gradient(180deg, var(--ink), var(--text));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* 纸色柔光垫在字后，压在照片上沿也读得清（drop-shadow 不会盖掉渐变字） */
+  filter: drop-shadow(0 1px 4px rgba(247, 239, 221, 0.95));
+  opacity: 0;
+  /* 起始比终态低 8px，悬停时上升就位 */
+  transform: translate(-50%, calc(-50% + 8px));
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.friend:hover .friend__name {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+/* 文字名探出卡片上沿，放开裁切（同 has-badge 的处理） */
+.friend.has-name {
+  overflow: visible;
+}
+
+/* 问候动画（name-rise / bug-rise）仅窄屏触摸端使用，规则在下方媒体查询里；
+   PC 端保持默认隐藏 + 悬停浮现，不播问候。keyframes 全局定义（媒体查询内可引用） */
+
+@keyframes name-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes bug-rise {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .friend:hover {
@@ -908,6 +972,30 @@ body.is-locked {
   }
 }
 
+/* 触摸设备（无悬停能力）：名字与头顶表情（如落叶🍂）常驻显示（同站主🐛逻辑），
+   进入/回到形象墙时 is-greeting 播问候动画（JS 逐卡错峰延迟）。
+   按能力而非宽度区分：有鼠标的 PC（hover: hover）即使窗口再窄也不命中，
+   保持默认隐藏 + 悬停浮现 */
+@media (hover: none) {
+  .friend__name {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+
+  .friend.has-badge .friend__bug {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+
+  .friend__name.is-greeting {
+    animation: name-rise 0.3s ease both;
+  }
+
+  .friend.has-badge .friend__bug.is-greeting {
+    animation: bug-rise 0.3s ease both;
+  }
+}
+
 /* 手机：照片墙改单列大图——手机是主要浏览场景，
    两列小图在窄屏上只有百余像素宽，看不清内容。
    媒体查询里用 !important 覆盖脚本写入的内联几何变量，
@@ -1046,6 +1134,19 @@ body.is-locked {
 
 .friend.has-badge {
   overflow: visible;
+}
+
+/* 好友头顶表情（如落叶 🍂）与文字名同款：PC 端默认藏起、悬停浮现；
+   站主 🐛 无 has-badge 类保持常驻；窄屏端常驻 + 问候动画 */
+.friend.has-badge .friend__bug {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.friend.has-badge:hover .friend__bug {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* 去掉内衬金线与书脊；头像本体加大圆角 */
