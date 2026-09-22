@@ -24,6 +24,10 @@
   var lightbox = document.getElementById('lightbox');
   var lbMedia  = document.getElementById('lbMedia');
   var lbCap    = document.getElementById('lbCap');
+  var lbCount  = document.getElementById('lbCount');
+
+  var curtainLayer = document.getElementById('curtainLayer');
+  var curtainRope  = document.getElementById('curtainRope');
 
   // 背景双层，交替淡入实现平滑切换
   var backdrops = [document.getElementById('backdropA'), document.getElementById('backdropB')];
@@ -32,9 +36,21 @@
   /* ---------------------------------------------------------- 状态 */
 
   var currentId       = null;
+  var galleryMode     = 'own';  // own = 好友照片，together = 与站主的合影
   var gallery         = [];   // 当前好友的图片列表
   var galleryCaptions = [];   // 与 gallery 一一对应的照片标题
   var galleryTitle    = '';
+
+  var curtainState = 'idle'; // idle = 静止，dropping/lifting = 过渡中
+  var curtainTimer = null;
+  var curtainDuration = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ? 80
+    : 320;
+  /* 幕布落定后的停留时长：遮住画面换内容，停一拍再收起 */
+  var curtainHold = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ? 80
+    : 200;
+  var curtainToken = 0;
 
   /* 当前右页的照片墙与自适应函数（换条目时整体换新引用，
      resize 监听只挂一次，始终操作最新的一组） */
@@ -68,7 +84,7 @@
     return d && d[0] > 0 && d[1] > 0 ? d : null;
   }
 
-  /** 墙内用缩略图（album/thumb/ 下同名 jpg）；缺失时由 onerror 退回原图。
+  /** 墙内用缩略图（album/thumb/ 下同名文件）；缺失时由 onerror 退回原图。
       视频不用缩略图，走 poster 首帧 */
   function wallSrc(src) {
     return isVideo(src) ? src : src.replace(/([^\/]+)$/, 'thumb/$1');
@@ -98,37 +114,94 @@
     return node;
   }
 
-  /**
-   * 稳定伪随机（FNV-1a）：同一个字符串永远得到同一个 0~1 的数。
-   * 用途：照片墙的倾角 / 尺寸 / 位移。刷新页面不会跳动，
-   * 换一张好友才重新排一次，看起来就是"手工贴上去的"。
-   */
-  function hash01(str) {
-    var h = 2166136261;
-    for (var i = 0; i < str.length; i++) {
-      h ^= str.charCodeAt(i);
-      h = Math.imul(h, 16777619);
+  function updateCurtainLabel(mode) {
+    if (!curtainRope) return;
+    var activeMode = mode || galleryMode;
+    curtainRope.setAttribute(
+      'aria-label',
+      activeMode === 'together' ? '返回个人照片' : '打开共同相册'
+    );
+    curtainRope.setAttribute('data-mode', activeMode);
+    /* 图案按钮：两张叠放的照片小图标（不含文字），语义走 aria-label */
+    curtainRope.innerHTML =
+      '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+      '<rect x="2.8" y="5.8" width="13" height="10.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+      '<rect x="9.2" y="9.4" width="12" height="9" rx="2" fill="#fcf7ec" stroke="currentColor" stroke-width="1.6"/>' +
+      '</svg>';
+    curtainRope.setAttribute(
+      'aria-busy',
+      curtainState === 'dropping' || curtainState === 'lifting' ? 'true' : 'false'
+    );
+  }
+
+  function setCurtainState(next) {
+    curtainState = next;
+    if (!curtainLayer) return;
+    curtainLayer.setAttribute('data-state', next);
+    if (stageEl) stageEl.setAttribute('data-curtain-state', next);
+    if (curtainRope) {
+      var busy = next === 'dropping' || next === 'lifting';
+      curtainRope.disabled = busy;
+      updateCurtainLabel();
     }
-    return (h >>> 0) / 4294967295;
+  }
+
+  function resetCurtain() {
+    curtainToken += 1;
+    if (curtainTimer) {
+      window.clearTimeout(curtainTimer);
+      curtainTimer = null;
+    }
+    setCurtainState('idle');
+    if (curtainLayer) curtainLayer.setAttribute('data-mode', 'own');
+    updateCurtainLabel('own');
+  }
+
+  function toggleCurtain() {
+    if (!curtainLayer || !curtainRope) return;
+    if (curtainState !== 'idle') return;
+
+    var friend = findFriend(currentId);
+    if (!friend) return;
+    if (me && friend.id === me.id) return;
+
+    var targetMode = galleryMode === 'together' ? 'own' : 'together';
+    var token = ++curtainToken;
+
+    setCurtainState('dropping');
+    updateCurtainLabel(targetMode);
+
+    curtainTimer = window.setTimeout(function () {
+      curtainTimer = null;
+      if (token !== curtainToken || curtainState !== 'dropping' || currentId !== friend.id) return;
+      /* 遮住后先换好内容，停留一拍再收幕布 */
+      renderPlate(friend, targetMode);
+      if (curtainLayer) curtainLayer.setAttribute('data-mode', targetMode);
+      curtainTimer = window.setTimeout(function () {
+        curtainTimer = null;
+        if (token !== curtainToken || curtainState !== 'dropping' || currentId !== friend.id) return;
+        setCurtainState('lifting');
+        updateCurtainLabel(targetMode);
+        curtainTimer = window.setTimeout(function () {
+          curtainTimer = null;
+          if (token !== curtainToken || curtainState !== 'lifting' || currentId !== friend.id) return;
+          setCurtainState('idle');
+          if (curtainLayer) curtainLayer.setAttribute('data-mode', targetMode);
+          updateCurtainLabel(targetMode);
+        }, curtainDuration);
+      }, curtainHold);
+    }, curtainDuration);
   }
 
   /**
-   * 规整排版：统一尺寸、统一间距、不旋转、不位移。
-   * 所有照片同一宽度、同一行高，像贴整齐的相册页。
+   * 设置照片墙的尺寸和间距。
    * 初始画幅统一 16:10 兜底（与现有照片/视频一致），媒体真实分辨率到达后
    * 由 applyNaturalAspect 按各自比例修正，避免长时间裁切。
    * @param {number} order 第几张（0 起）
    * @param {number} total 该好友一共几张
    */
-  function scatter(el, seed, order, total) {
-    el.style.setProperty('--rot', '0deg');
-    el.style.setProperty('--dx',  '0px');
-    el.style.setProperty('--dy',  '0px');
-    el.style.setProperty('--sc',  '1');
-    el.style.setProperty('--z',   '1');
-    el.style.setProperty('--ar',  '16 / 10');
-
-    // 统一宽度：与落叶的相册页同一套排版，等宽两列起排（单张时占列首）
+  function styleShot(el, order, total) {
+    // 统一宽度：等宽两列起排（单张时占列首）
     el.style.setProperty('--w', '41%');
 
     // 统一间距：只留正边距，行与行不叠压
@@ -140,13 +213,17 @@
     if (total >= 2 && (order + 1) % 2 === 0) {
       el.style.setProperty('--mr', '0px');
     }
+    // 奇数张时最后一张独占一行，去掉右边距后由 flex 居中，
+    // 还原旧版照片墙中底部视频/照片居中的排版。
+    if (total % 2 === 1 && order === total - 1) {
+      el.style.setProperty('--mr', '0px');
+    }
   }
 
   /**
    * 媒体真实分辨率到达后，把内联 aspect-ratio 设为自身比例。
-   * 内联 aspect-ratio 直接作用于属性，能压过 .shot 的 --ar
-   * （含手机端 !important 那条——important 只挂在变量上），
-   * 外框比例与媒体一致后 cover 也不再裁切；再重量一次照片墙居中垫片。
+   * 内联 aspect-ratio 直接作用于媒体元素，外框比例与媒体一致后
+   * cover 也不再裁切；再重量一次照片墙居中垫片。
    */
   function applyNaturalAspect(el, width, height) {
     if (!width || !height) return;
@@ -154,16 +231,14 @@
     requestAnimationFrame(function () { if (fitShotsFn) fitShotsFn(); });
   }
 
-  /* 页面底衬：整页铺一张底图。默认图为 4 号背景（assets/img/plate/default.jpg），
-     条目自带的 plate（如落叶）优先。浅色蒙版交给 CSS 的 .plate__deco--photo，
-     压住底图保证照片与文字可读 */
+  /* 页面底衬：整页铺一张底图。条目自带的 plate 优先，否则使用默认底图。 */
   function buildDeco(f) {
     var deco = make('div', 'plate__deco');
 
     // 注意用内联样式赋 URL：外链 CSS 里的相对路径是相对 css 文件解析的，
     // 内联样式才相对页面，data.js 里写的路径才作数
     deco.classList.add('plate__deco--photo');
-    deco.style.backgroundImage = 'url("' + (f.plate || 'assets/img/plate/default.jpg') + '")';
+    deco.style.backgroundImage = 'url("' + (f.plate || 'assets/img/plate/background-04.png') + '")';
     return deco;
   }
 
@@ -213,7 +288,9 @@
       img.setAttribute('src', avatarOf(f));
       img.alt = f.name;
       img.loading = 'lazy';
-      btn.appendChild(img);
+      var portrait = make('span', 'friend__portrait');
+      portrait.appendChild(img);
+      btn.appendChild(portrait);
 
       // 名字：带表情的角色（站主🐛/落叶🍂）以表情为名，不渲染文字；
       // 其余好友默认隐藏，悬停时在卡片上方渐显上升浮现
@@ -258,34 +335,60 @@
 
   /* ------------------------------------------ 右页：好友图片小图 */
 
-  function renderPlate(f) {
+  function renderPlate(f, mode) {
     // 切换好友前先暂停旧页的视频，免得躲在 DOM 里继续放
     pauseAllVideos();
 
-    // 该条目的图片；没有图片时退回头像，保证右页不会空着
-    gallery = (f.images && f.images.length ? f.images.slice() : [avatarOf(f)])
+    galleryMode = mode === 'together' ? 'together' : 'own';
+    if (curtainLayer) curtainLayer.setAttribute('data-mode', galleryMode);
+    var isMe = !!(me && f.id === me.id);
+    if (curtainRope) {
+      var hideCurtainControl = isMe && galleryMode === 'own';
+      curtainRope.hidden = hideCurtainControl;
+      curtainRope.setAttribute('aria-hidden', hideCurtainControl ? 'true' : 'false');
+    }
+    updateCurtainLabel(galleryMode);
+
+    var together = f.together || {};
+    var sourceImages = galleryMode === 'together'
+      ? (together.images || [])
+      : (f.images || []);
+    var sourceCaptions = galleryMode === 'together'
+      ? (together.captions || [])
+      : (f.captions || []);
+    var sourcePlate = galleryMode === 'together'
+      ? (together.plate || 'assets/img/plate/background-04.png')
+      : f.plate;
+    var sourceData = galleryMode === 'together' ? together : f;
+
+    // 好友自己的相册没有图片时退回头像；共同相册保持空白并显示提示。
+    gallery = (sourceImages.length ? sourceImages.slice() : (galleryMode === 'own' ? [avatarOf(f)] : []))
       .filter(Boolean);
-    galleryCaptions = (f.captions || []).slice();
-    galleryTitle = f.name;
+    galleryCaptions = sourceCaptions.slice();
+    galleryTitle = galleryMode === 'together' ? ('我和' + f.name + '的合影') : f.name;
 
-    stageEl.textContent = '';
+    // 幕布层独立挂在右页上方，过渡期间遮住内容，动画结束后回收离场。
+    var oldPlate = stageEl.querySelector('.plate');
+    if (oldPlate) oldPlate.remove();
 
-    var plate = make('div', 'plate');
+    var plate = make('div', 'plate' + (galleryMode === 'together' ? ' plate--together' : ' plate--own'));
 
-    /* --- 底衬：默认奶油底（淡彩纸屑 / 暖阳 / 气球），或条目自带的底图 --- */
-    var deco = buildDeco(f);
+    /* --- 底衬：条目自带的底图，或默认底图 --- */
+    var deco = buildDeco({ plate: sourcePlate });
     plate.appendChild(deco);
 
-    /* 底衬纸片的滚动视差：下滑时轻轻上移，有一点"纸片被带起来"的反馈。
-       没有照片的页面全靠这个才看得出确实在滑 */
-    var parEls = [];
-    if (!f.plate) {
-      Array.prototype.forEach.call(deco.children, function (n, i) {
-        parEls.push({ el: n, k: 0.10 + (i % 4) * 0.05 });
-      });
+    /* --- 右页标题：只显示人物名（顶部）；共同相册不显示顶部文案 --- */
+    if (galleryMode === 'own') {
+      var head = make('header', 'plate__head');
+      var headCopy = make('div', 'plate__head-copy');
+      headCopy.appendChild(make('h2', 'plate__title', f.name));
+      head.appendChild(headCopy);
+      /* 右上角留给「共同相册」按钮；站主页没有按钮，保留 ✦ 装饰 */
+      if (isMe) head.appendChild(make('span', 'plate__head-mark', '✦'));
+      plate.appendChild(head);
     }
 
-    /* --- 照片墙：错落摆放的小照片，点任意一张才出全屏大图 --- */
+    /* --- 照片墙：点任意一张才出全屏大图 --- */
     var shots = make('div', 'plate__grid');
 
     // 双列瀑布流（masonry 条目专用）：两列各自独立堆叠，
@@ -294,7 +397,7 @@
     var colR = null;
     var colHL = 0;   // 两列各自的累计高宽比（h/w）——列宽相同，可当相对高度用
     var colHR = 0;
-    if (f.masonry && gallery.length > 1) {
+    if (sourceData.masonry && gallery.length > 1) {
       shots.classList.add('plate__grid--cols');
       colL = make('div', 'plate__col');
       colR = make('div', 'plate__col');
@@ -309,12 +412,15 @@
     gallery.forEach(function (src, i) {
       var btn = make('button', 'shot');
       btn.type = 'button';
+      if (galleryMode === 'together') {
+        btn.classList.add('shot--memory-' + ((i % 4) + 1));
+      }
       // 有照片名（如 出土芙蓉）就让它当按钮说明；没有退回通用文案
-      var cap = (f.captions || [])[i] || '';
-      var alt = cap || (f.name + ' 图 ' + (i + 1));
+      var cap = sourceCaptions[i] || '';
+      var alt = cap || (galleryTitle + ' 图 ' + (i + 1));
       btn.title = cap ? '查看「' + cap + '」' : '点击查看大图';
       btn.setAttribute('aria-label', alt);
-      scatter(btn, f.id + '|' + i + '|' + src, i, gallery.length);
+      styleShot(btn, i, gallery.length);
 
       var media;
       if (isVideo(src)) {
@@ -328,7 +434,6 @@
         media.setAttribute('muted', '');
         media.setAttribute('playsinline', '');
         media.preload = 'metadata';
-        media.alt = alt;
         // 与照片同一画幅（16:10）：创建即定框，不依赖元数据加载，
         // 避免元数据迟到时视频退回 16:9 兜底框而显得比照片小
         media.style.aspectRatio = '16 / 10';
@@ -356,8 +461,7 @@
       btn.appendChild(media);
 
       // data.js 预存了真实宽高：建 DOM 即按真实比例定框，加载全程零跳动
-      // （内联 aspect-ratio 压过 .shot 的 --ar 兜底，含手机端 !important 那条）
-      var dd = dimsOf(f, src);
+      var dd = dimsOf(sourceData, src);
       if (dd) media.style.aspectRatio = dd[0] + ' / ' + dd[1];
 
       btn.addEventListener('click', function () { openLightbox(src); });
@@ -365,7 +469,7 @@
       if (colL) {
         // 按累计高度分列：哪列矮放哪列，两列底部更齐。
         // 宽高未知的按 16:10 估——全未知时退化为左右轮流，与旧奇偶分列一致
-        var d = dimsOf(f, src);
+        var d = dimsOf(sourceData, src);
         var ratio = d ? d[1] / d[0] : 10 / 16;
         if (colHL <= colHR) { colL.appendChild(btn); colHL += ratio; }
         else                { colR.appendChild(btn); colHR += ratio; }
@@ -376,7 +480,11 @@
 
     if (!gallery.length) {
       // 空条目：给一句占位文案，免得右页像加载失败
-      shots.appendChild(make('div', 'plate__empty', '还没有贴照片，先去别处逛逛吧~'));
+      shots.appendChild(make(
+        'div',
+        'plate__empty',
+        galleryMode === 'together' ? '还没有整理和小虫一起的照片~' : '还没有贴照片，先去别处逛逛吧~'
+      ));
     }
     shots.appendChild(fill);
 
@@ -411,17 +519,12 @@
       updateHints();
     }
 
-    /* 滚动档：只更新 is-overflow 与视差，不重量尺寸避免抖动 */
+    /* 滚动档：只更新溢出状态，不重量尺寸避免抖动 */
     function updateHints() {
       if (shotsEl !== shots) return;
       var over = shots.scrollHeight - shots.clientHeight > 2;
       shots.classList.toggle('is-overflow', over);
 
-      // 底衬视差：用独立的 translate 属性，不碰纸片自己的 rotate
-      for (var i = 0; i < parEls.length; i++) {
-        var t = Math.min(64, shots.scrollTop * parEls[i].k);
-        parEls[i].el.style.translate = '0 ' + (-t).toFixed(1) + 'px';
-      }
     }
 
     fitShotsFn = layoutShots;
@@ -440,7 +543,12 @@
     requestAnimationFrame(function () { requestAnimationFrame(layoutShots); });
 
     // 右页页脚。字体/分割线样式参考左页 .page__foot
-    plate.appendChild(make('footer', 'plate__foot', '世界，充满未解之谜...'));
+    // 个人相册与共同相册文案不同
+    plate.appendChild(make(
+      'footer',
+      'plate__foot',
+      galleryMode === 'together' ? '我会好好保存。' : '世界，充满未解之谜...'
+    ));
 
     stageEl.appendChild(plate);
 
@@ -467,7 +575,10 @@
     currentId = f.id;
 
     syncActive();
-    if (changed) renderPlate(f);
+    if (changed || galleryMode !== 'own') {
+      resetCurtain();
+      renderPlate(f, 'own');
+    }
 
     if (enterDetail) document.body.classList.add('is-detail');
 
@@ -517,7 +628,6 @@
     var src = gallery[lbIndex];
     if (!src) return;
 
-    pauseAllVideos(lbMedia);
     lbMedia.textContent = '';
 
     var el = make('img');   // 放大层只放图片，视频留在墙内播放
@@ -531,6 +641,17 @@
 
     // 有照片名就显示照片名（如 出土芙蓉），没有就不显示
     lbCap.textContent = galleryCaptions[lbIndex] || '';
+
+    // 视频留在照片墙中播放，因此计数只统计可放大的图片。
+    var imageIndex = 0;
+    var imageCount = 0;
+    for (var ci = 0; ci < gallery.length; ci++) {
+      if (!isVideo(gallery[ci])) {
+        if (ci === lbIndex) imageIndex = imageCount;
+        imageCount++;
+      }
+    }
+    lbCount.textContent = (imageIndex + 1) + ' / ' + imageCount;
 
     // 相邻两张原图预取（视频跳过）：翻到时基本秒开
     for (var d = -1; d <= 1; d += 2) {
@@ -573,8 +694,6 @@
     document.body.classList.remove('is-locked');
     // 缩放状态一并复位，下次打开从原图比例开始
     resetZoom();
-    // 暂停放大层里的视频（点关闭通常是想离开，不该继续放）
-    pauseAllVideos(lbMedia);
     lbMedia.textContent = '';
     if (gallery.length) {
       // 背景恢复：找该好友第一张图片（视频跳过）
@@ -816,11 +935,14 @@
   /* 收起照片墙回首页：窄屏「返回」、PC「✕」、点击标题「这次又会遇见谁？」共用 */
   function collapseHome() {
     pauseAllVideos();
+    resetCurtain();
     document.body.classList.remove('is-detail');
     if (/^#\/friend\//.test(location.hash)) location.hash = '';
   }
 
   backBtn.addEventListener('click', collapseHome);
+
+  if (curtainRope) curtainRope.addEventListener('click', toggleCurtain);
 
   // 左页标题「这次又会遇见谁？」：点击回到首页（不真正跳转，平滑收起）
   var homeLink = document.getElementById('homeLink');

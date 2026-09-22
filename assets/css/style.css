@@ -19,6 +19,8 @@
   --line: rgba(176, 141, 87, 0.35);
   --line-soft: rgba(176, 141, 87, 0.18);
   --shadow: rgba(92, 77, 66, 0.14);
+  --paper-glow: rgba(255, 252, 241, 0.72);
+  --gold-glow: rgba(212, 175, 55, 0.34);
 
   --serif: "Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", Georgia, serif;
   --sans: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -104,12 +106,13 @@ body.is-locked {
   grid-template-columns: 4fr 6fr;
   width: min(1320px, 96vw);
   height: min(920px, 93vh);
-  border-radius: 3px 9px 9px 3px;
+  border-radius: 12px 16px 16px 12px;
   overflow: hidden;
   background: var(--paper);
   /* 底部几层错位阴影模拟纸张厚度 */
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.62),
+    inset 0 0 34px rgba(125, 94, 45, 0.12),
     0 0 0 1px rgba(61, 50, 42, 0.35),
     0 2px 0 #e8dcc2,
     0 4px 0 #ddd0af,
@@ -133,13 +136,20 @@ body.is-locked {
 }
 
 /* 主页面（左页·形象照页）背景：手绘铅笔稿壁纸整页铺满。
-   图为浅底素描，深色文字与米色卡片直接压上去依然清晰，
-   故不再叠加纸色蒙版 */
+   叠一层轻薄纸色，让背景更淡，人物卡与文字更集中。 */
 .page--left {
-  background-image: url("../img/backdrop.jpg");
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.42)),
+    url("../img/plate/background-03.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+@media (min-width: 1041px) {
+  .page--right {
+    border-left: 1px solid rgba(176, 141, 87, 0.24);
+  }
 }
 
 /* -------------------------------------------------- 左页：好友头像 */
@@ -211,7 +221,7 @@ body.is-locked {
 }
 
 .brand {
-  padding: 44px 26px 14px;
+  padding: 46px 30px 16px;
 }
 
 .brand__title {
@@ -221,6 +231,8 @@ body.is-locked {
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--ink);
+  line-height: 1.18;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.66);
 }
 
 .brand__title::after {
@@ -253,9 +265,15 @@ body.is-locked {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin: 12px 0 0;
+  width: fit-content;
+  margin: 14px 0 0;
+  padding: 7px 11px;
   font-size: 12.5px;
   color: var(--text-soft);
+  border: 1px solid rgba(176, 141, 87, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 252, 241, 0.48);
+  box-shadow: 0 5px 16px -14px rgba(92, 77, 66, 0.7);
 }
 
 .brand__stat b {
@@ -299,7 +317,7 @@ body.is-locked {
   margin-top: 18px;   /* 除站主外的形象卡片整体稍微下移，离标题远一点 */
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 22px 16px;
+  gap: 24px 18px;
   /* 卡片从标题下方就近排起，不留大片头顶空白；
      下方余白交给 .page__deco 的暖光纸屑垫底 */
   align-content: start;
@@ -314,12 +332,14 @@ body.is-locked {
   /* 与站主形象照同款：纯头像直出，无纸底无内衬无书脊 */
   padding: 0;
   gap: 0;
-  border: 0;
+  border: 1px solid rgba(255, 252, 241, 0.72);
   border-radius: 12%;
   overflow: hidden;
   cursor: pointer;
-  background: none;
-  box-shadow: 0 2px 6px -2px rgba(92, 77, 66, 0.4);
+  background: rgba(247, 239, 221, 0.3);
+  box-shadow:
+    0 2px 6px -2px rgba(92, 77, 66, 0.45),
+    0 0 0 1px rgba(176, 141, 87, 0.12);
   transition: box-shadow 0.22s ease, transform 0.22s ease;
 }
 
@@ -327,6 +347,15 @@ body.is-locked {
 .friend::before,
 .friend::after {
   display: none;
+}
+
+.friend__portrait {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12%;
 }
 
 .friend__avatar {
@@ -342,6 +371,18 @@ body.is-locked {
   transition: filter 0.25s ease;
 }
 
+.friend__portrait .friend__avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+/* 江亱只放大框内头像内容，卡片外框尺寸保持不变。 */
+.friend[data-id="friend-04"] .friend__avatar {
+  transform: scale(1.14);
+  transform-origin: center;
+}
+
 /* 姓名：PC 端默认藏起，悬停卡片时在卡片上方（虫表情同一位置）渐显上升浮现；
    窄屏触摸端在媒体查询里常驻显示，并由 is-greeting 播问候动画 */
 .friend__name {
@@ -352,7 +393,7 @@ body.is-locked {
   pointer-events: none;
   white-space: nowrap;
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.12em;
@@ -381,7 +422,9 @@ body.is-locked {
 
 .friend:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 14px -4px rgba(92, 77, 66, 0.5);
+  box-shadow:
+    0 10px 20px -8px rgba(92, 77, 66, 0.62),
+    0 0 0 1px rgba(212, 175, 55, 0.3);
 }
 
 .friend:hover .friend__avatar {
@@ -395,6 +438,7 @@ body.is-locked {
 
 /* 选中：一圈金色柔光（同站主卡片语言） */
 .friend.is-active {
+  border-color: rgba(212, 175, 55, 0.82);
   box-shadow:
     0 0 0 2px rgba(212, 175, 55, 0.5),
     0 0 16px rgba(212, 175, 55, 0.42),
@@ -428,6 +472,259 @@ body.is-locked {
 }
 
 /* 右页页脚要在 .plate__deco 之上、且不随照片墙滚动 */
+.plate__head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  flex: none;
+  /* 文字位置由顶部 padding 决定（保持 32px 不动）；
+     底部 padding 收窄让金线稍微上移，照片随头部变高变矮跟随，
+     金线到照片的间距（grid 顶部 padding）保持不变 */
+  padding: 32px 30px 14px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0));
+}
+
+.plate__head::after {
+  content: "";
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), rgba(176, 141, 87, 0.12) 72%, transparent);
+  animation: plate-line-in 0.72s ease-out both;
+}
+
+.plate__head::before {
+  content: "";
+  position: absolute;
+  top: -28px;
+  left: -12px;
+  width: 180px;
+  height: 92px;
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgba(229, 201, 111, 0.2), rgba(229, 201, 111, 0) 70%);
+}
+
+.plate__head::after {
+  content: "";
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), rgba(176, 141, 87, 0.12) 72%, transparent);
+  animation: plate-line-in 0.72s ease-out both;
+}
+
+.plate__head-copy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  animation: plate-head-in 0.52s ease-out both;
+}
+
+.plate__title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: clamp(22px, 2.1vw, 30px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.plate__head-mark {
+  flex: none;
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 28px;
+  line-height: 1;
+  opacity: 0.72;
+  text-shadow: 0 0 14px var(--gold-glow);
+}
+
+.plate__subline {
+  margin: 8px 0 0;
+  color: var(--text-soft);
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  line-height: 1.5;
+}
+
+.plate__meta {
+  display: block;
+  margin-top: 7px;
+  color: var(--text-soft);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+@keyframes plate-head-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 共同相册使用独立底图；幕布本身只在切换期间作为过渡层出现。 */
+.plate--together {
+  z-index: 3;
+  background: transparent;
+}
+
+.plate--together .plate__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 22px 16px;
+  align-content: start;
+  align-items: start;
+  padding: 36px 30px 84px;
+}
+
+.plate--together .plate__grid .plate__col {
+  display: contents;
+}
+
+.plate--together .plate__grid .shot {
+  width: auto !important;
+  margin: 0;
+}
+
+.plate--together .shot--memory-1 {
+  grid-column: 1 / span 7;
+}
+
+.plate--together .shot--memory-2 {
+  grid-column: 8 / span 5;
+  margin-top: 34px !important;
+}
+
+.plate--together .shot--memory-3 {
+  grid-column: 3 / span 8;
+  margin-top: 6px !important;
+}
+
+.plate--together .shot--memory-4 {
+  grid-column: 1 / span 5;
+  margin-top: 12px !important;
+}
+
+.plate--together .shot {
+  padding: 7px;
+  border-radius: 5px;
+  border-color: rgba(91, 116, 115, 0.3);
+  background: rgba(249, 249, 244, 0.88);
+  box-shadow:
+    0 6px 14px -10px rgba(54, 76, 76, 0.72),
+    0 0 0 1px rgba(91, 116, 115, 0.1);
+}
+
+.plate--together .shot img,
+.plate--together .shot video {
+  border-radius: 3px;
+  filter: saturate(0.94) contrast(1);
+}
+
+.plate--together .shot:hover {
+  box-shadow:
+    0 12px 20px -12px rgba(54, 76, 76, 0.78),
+    0 0 0 1px rgba(91, 116, 115, 0.25);
+}
+
+.plate--together .plate__empty {
+  color: rgba(236, 232, 211, 0.78);
+}
+
+.plate--together .plate__empty {
+  grid-column: 1 / -1;
+}
+
+.plate--together .plate__foot {
+  color: rgba(235, 230, 208, 0.72);
+}
+
+/* -------------------------------------------------- 共同相册幕布 */
+
+.curtain-layer {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: none;
+  transform: translateY(-100%);
+  transition: transform 0.32s linear;
+}
+
+.curtain-layer[data-state="dropping"],
+.curtain-layer[data-state="lifting"] {
+  z-index: 4;
+}
+
+.curtain-layer[data-state="dropping"] {
+  transform: translateY(0);
+}
+
+.curtain__cloth {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  opacity: 1;
+  pointer-events: none;
+  /* 布面：插画按容器宽度整幅排布、向下重复——图案比 cover 小一号，
+     手机端也能看到完整画面宽度（再想小改 100% → 90% 即可） */
+  background: url("../img/curtain-cloth.jpg") top center / 100% auto repeat;
+}
+
+/* -------------------------------------------------- 共同相册入口按钮 */
+.curtain__btn {
+  position: absolute;
+  z-index: 15;
+  top: 16px;
+  right: clamp(14px, 2.2vw, 28px);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(61, 50, 42, 0.32);
+  border-radius: 50%;
+  background: rgba(252, 247, 236, 0.9);
+  color: #5c4d42;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  box-shadow: 0 2px 8px -4px rgba(120, 100, 70, 0.5);
+  transition: filter 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.curtain__btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.curtain__btn:focus-visible {
+  outline: 2px solid rgba(212, 175, 55, 0.86);
+  outline-offset: 3px;
+}
+
+.curtain__btn:hover:not(:disabled) {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+
 .plate__foot {
   position: relative;
   z-index: 1;
@@ -438,6 +735,7 @@ body.is-locked {
 
 .plate {
   position: relative;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -524,29 +822,6 @@ body.is-locked {
   background: radial-gradient(circle, rgba(250, 223, 148, 0.34) 0%, rgba(250, 223, 148, 0.14) 62%, rgba(250, 223, 148, 0) 100%);
 }
 
-/* 右上角的气球 */
-.balloon {
-  position: absolute;
-  top: var(--y, 4%);
-  right: var(--x, 6%);
-  width: var(--bw, 46px);
-  height: calc(var(--bw, 46px) * 1.18);
-  border-radius: 50% 50% 48% 48% / 46% 46% 54% 54%;
-  background: radial-gradient(ellipse at 34% 28%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 62%),
-    var(--tone, #cfe0f2);
-  opacity: 0.42;
-}
-
-.balloon::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  width: 1px;
-  height: calc(var(--bw, 46px) * 0.9);
-  background: linear-gradient(180deg, rgba(150, 160, 175, 0.5), rgba(150, 160, 175, 0));
-}
-
 @keyframes rise {
   from {
     opacity: 0;
@@ -559,16 +834,16 @@ body.is-locked {
   }
 }
 
-/* 照片墙：照片像贴在纸上一样摆放
-   每张的尺寸 / 间距由脚本写入 --w --mt --my --ml --mr --ar */
+/* 照片墙：照片像贴在纸上一样摆放；尺寸和间距由脚本写入。 */
 .plate__grid {
   position: relative;
   z-index: 1;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
-  padding: 40px 12px 62px 30px;
+  padding: 36px 12px 62px 30px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -633,21 +908,44 @@ body.is-locked {
   flex: none;
   width: var(--w, 46%);
   margin: var(--mt, 0px) var(--mr, 6px) var(--my, 0px) var(--ml, 0px);
+  padding: 8px;
+  border: 1px solid rgba(255, 252, 241, 0.82);
+  border-radius: 5px;
+  cursor: zoom-in;
+  transform: translateY(0);
+  z-index: 1;
+  background: rgba(255, 252, 241, 0.86);
+  box-shadow:
+    0 5px 14px -8px rgba(61, 50, 42, 0.72),
+    0 0 0 1px rgba(176, 141, 87, 0.12);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+/* 个人照片墙恢复旧版直出样式：双列照片直接铺在人物背景上。 */
+.plate--own .shot {
   padding: 0;
   border: 0;
-  cursor: zoom-in;
-  transform: rotate(var(--rot, 0deg)) translate(var(--dx, 0px), var(--dy, 0px)) scale(var(--sc, 1));
-  z-index: var(--z, 1);
-  background: none;
-  transition: transform 0.22s ease;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.plate--own .shot img,
+.plate--own .shot video {
+  border-radius: 0;
+}
+
+.plate--own .shot:hover {
+  box-shadow: none;
 }
 
 .shot img,
 .shot video {
   display: block;
   width: 100%;
-  aspect-ratio: var(--ar, 16 / 10);
+  aspect-ratio: 16 / 10;
   object-fit: cover;
+  border-radius: 2px;
   background: var(--paper-deep);
   filter: contrast(1.04) saturate(0.96);
   transition: filter 0.25s ease;
@@ -661,8 +959,11 @@ body.is-locked {
 }
 
 .shot:hover {
-  transform: rotate(0deg) translate(var(--dx, 0px), -8px) scale(calc(var(--sc, 1) + 0.035));
+  transform: translateY(-8px) scale(1.035);
   z-index: 99;
+  box-shadow:
+    0 16px 24px -12px rgba(61, 50, 42, 0.76),
+    0 0 0 1px rgba(212, 175, 55, 0.34);
 }
 
 .shot:hover img,
@@ -682,8 +983,8 @@ body.is-locked {
   align-items: center;
   gap: 4px;
   position: fixed;
-  top: 14px;
-  left: 16px;
+  top: max(14px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
   z-index: 40;
   padding: 8px 15px;
   font: inherit;
@@ -694,6 +995,19 @@ body.is-locked {
   border-radius: 999px;
   box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.5);
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.backbtn:hover,
+.backbtn:focus-visible {
+  transform: translateY(-2px);
+  background: var(--paper-glow);
+  box-shadow: 0 8px 18px -9px rgba(0, 0, 0, 0.62);
+}
+
+.backbtn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
 }
 
 /* ----------------------------------------------------------- 放大层 */
@@ -710,17 +1024,15 @@ body.is-locked {
   touch-action: none;
   /* 手机端禁止触摸滑动 / 下拉滚动穿透 */
   overscroll-behavior: contain;
-  background: rgba(18, 13, 9, 0.94);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(92, 70, 43, 0.34), transparent 54%),
+    rgba(18, 13, 9, 0.95);
   backdrop-filter: blur(7px);
   animation: fade 0.2s ease both;
 }
 
 [hidden] {
   display: none !important;
-}
-
-.lightbox[hidden] {
-  display: none;
 }
 
 @keyframes fade {
@@ -750,8 +1062,7 @@ body.is-locked {
   min-height: 0;
 }
 
-.lightbox__media img,
-.lightbox__media video {
+.lightbox__media img {
   max-width: 92vw;
   max-height: 78vh;
   /* 动态视口高度（手机端地址栏收起时也准确），
@@ -780,11 +1091,6 @@ body.is-locked {
   transition: none;
 }
 
-/* 视频上允许点击控件（播放/进度条）；pan 手势在不可滚动的视频上无实际效果 */
-.lightbox__media video {
-  touch-action: manipulation;
-}
-
 @keyframes pop {
   from {
     opacity: 0;
@@ -804,6 +1110,18 @@ body.is-locked {
   color: rgba(255, 248, 226, 0.82);
   pointer-events: none;
   /* 让点击穿透到遮罩，关掉大图 */
+}
+
+.lightbox__count {
+  min-width: 52px;
+  padding: 5px 10px;
+  color: rgba(255, 248, 226, 0.8);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-align: center;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 999px;
+  background: rgba(24, 18, 12, 0.52);
 }
 
 /* 无照片名时彻底隐藏，不留空行（图片保持正中） */
@@ -890,7 +1208,8 @@ body.is-locked {
     grid-template-columns: 1fr;
     width: min(620px, 94vw);
     height: min(880px, 94vh);
-    border-radius: 6px 10px 10px 6px;
+    height: min(880px, 94dvh);
+    border-radius: 10px 14px 14px 10px;
     zoom: 1;
   }
 
@@ -912,6 +1231,14 @@ body.is-locked {
     transform: translateX(100%);
     visibility: hidden;
     transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.32s;
+    border-left: 0;
+  }
+
+  .curtain__btn {
+    top: 12px;
+    right: max(10px, env(safe-area-inset-right));
+    width: 32px;
+    height: 32px;
   }
 
   body.is-detail .page--right {
@@ -924,8 +1251,49 @@ body.is-locked {
   }
 
   /* 顶部让开左上角固定的「返回」按钮（top:14px + 按钮高约 36px） */
+  .plate__head {
+    /* 顶部 54px 给「返回」按钮让位；底部收窄让金线上移 */
+    padding: 54px 24px 16px;
+  }
+
+  .plate__head::after {
+    left: 24px;
+    right: 24px;
+  }
+
+  .plate__title {
+    font-size: 23px;
+  }
+
+  .plate__head-mark {
+    font-size: 23px;
+  }
+
   .plate__grid {
-    padding: 66px 18px 54px;
+    padding: 22px 18px 54px;
+  }
+
+  .plate--together .plate__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px 12px;
+    padding: 22px 18px 54px;
+  }
+
+  .plate--together .shot--memory-1 {
+    grid-column: 1 / span 4;
+  }
+
+  .plate--together .shot--memory-2 {
+    grid-column: 5 / span 2;
+    margin-top: 22px !important;
+  }
+
+  .plate--together .shot--memory-3 {
+    grid-column: 2 / span 4;
+  }
+
+  .plate--together .shot--memory-4 {
+    grid-column: 1 / span 3;
   }
 
   /* 瀑布流列容器在窄屏摊平：照片回到默认的流式换行布局，与原来一致 */
@@ -934,7 +1302,7 @@ body.is-locked {
   }
 
   .shot:hover {
-    transform: rotate(0deg) translate(var(--dx, 0px), -4px) scale(var(--sc, 1));
+    transform: translateY(-4px) scale(1.035);
   }
 
   .sun {
@@ -950,13 +1318,20 @@ body.is-locked {
    媒体查询里用 !important 覆盖脚本写入的内联几何变量，
    窗口跨档位缩放时无需重新渲染即生效 */
 @media (max-width: 620px) {
+  .curtain__btn {
+    top: 10px;
+    right: max(7px, env(safe-area-inset-right));
+    width: 32px;
+    height: 32px;
+  }
+
   .shot {
-    --w: 88% !important;
-    --ml: 6% !important;
+    --w: 82% !important;
+    --ml: 5% !important;
     --mr: 0px !important;
     --mt: 16px !important;
     --my: 26px !important;
-    --ar: 16 / 10 !important;
+    padding: 6px;
   }
 
   .grid {
@@ -981,6 +1356,39 @@ body.is-locked {
 
   .brand__title {
     font-size: 22px;
+  }
+
+  .brand__stat {
+    margin-top: 12px;
+  }
+
+  .plate--together .plate__grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 22px 18px 54px;
+  }
+
+  .plate--together .plate__grid .shot {
+    width: 92% !important;
+    justify-self: center;
+  }
+
+  .plate--together .shot--memory-1,
+  .plate--together .shot--memory-2,
+  .plate--together .shot--memory-3,
+  .plate--together .shot--memory-4 {
+    grid-column: 1;
+    margin-top: 0 !important;
+  }
+
+  .plate--together .shot--memory-2 {
+    width: 84% !important;
+    justify-self: end;
+  }
+
+  .plate--together .shot--memory-3 {
+    width: 88% !important;
+    justify-self: start;
   }
 
   /* 手机端放大层只留左右滑动手势，隐藏切换按钮 */
@@ -1109,6 +1517,10 @@ body.is-locked {
   border-radius: 12%;
 }
 
+.friend--me {
+  border-color: transparent;
+}
+
 .friend--me .friend__avatar {
   background: none;
   outline: 0;
@@ -1117,4 +1529,30 @@ body.is-locked {
 .friend--me:hover {
   transform: translateY(calc(-50% - 3px));
   box-shadow: 0 6px 14px -4px rgba(92, 77, 66, 0.5);
+}
+
+/* 触摸设备没有可靠的 hover：姓名和角色标记直接显示，
+   同时清除点击后可能残留的悬停位移。放在好友标记规则之后，避免被桌面默认态覆盖。 */
+@media (hover: none), (pointer: coarse) {
+  .friend__name {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+
+  .friend.has-badge .friend__bug {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+
+  .friend:hover {
+    transform: none;
+  }
+
+  .friend:hover .friend__avatar {
+    filter: saturate(0.98);
+  }
+
+  .shot:hover {
+    transform: none;
+  }
 }

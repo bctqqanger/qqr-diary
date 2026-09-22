@@ -57,7 +57,13 @@
     </section>
 
     <!-- 右页：图片为主 -->
-    <section class="page page--right" id="stage" aria-live="polite"></section>
+    <section class="page page--right" id="stage" aria-live="polite">
+      <!-- 共同相册幕布：只在切换时拉下并回收，作为内容过渡层。 -->
+      <div class="curtain-layer" id="curtainLayer" data-state="idle" data-mode="own">
+        <div class="curtain__cloth" aria-hidden="true"></div>
+      </div>
+      <button class="curtain__btn" id="curtainRope" type="button" aria-label="打开共同相册"></button>
+    </section>
   </div>
 
   <!-- 窄屏返回记录列表 -->
@@ -68,6 +74,7 @@
     <figure class="lightbox__figure">
       <div class="lightbox__media" id="lbMedia"></div>
       <figcaption class="lightbox__cap" id="lbCap"></figcaption>
+      <span class="lightbox__count" id="lbCount" aria-live="polite"></span>
     </figure>
   </div>
 

@@ -7,6 +7,9 @@
 # 原始素材图（已处理的网站资源在 assets/ 下）
 picture/
 
+# 浏览器临时预览缓存
+.tmp-*/
+
 # 本地调试预览页
 _dbg.html
 _frame.html

@@ -10,15 +10,15 @@
            （一张暖色风景占位卡，比灰底剪影好看，也不至于让人以为是图挂了）
    plate   右页底图路径；省略时用默认的奶油底衬（纸屑 + 太阳 + 气球），
            给了图就整页铺这张图，并自动压一层浅色蒙版让它不喧宾夺主
-   note    一句话备注（当前页面未展示，留着备查）
-   tags    标签数组，可以留空 []（当前页面未展示）
    captions 与 images 一一对应的照片标题，点开全屏大图时显示在图片下方；
             留空数组或删掉这个字段，放大层就退回显示好友名
+   together 可选。与站主一起拍摄的照片相册，格式为：
+            { images: [], captions: [], dims: {}, plate: '可选底图', masonry: false }
    images  该条目的全部图片
    dims    可选。图片/视频的真实宽高（键 = images 里的文件名，值 = [宽, 高]）。
            写了就不等图片下载完、一建 DOM 就按真实比例摆好，加载全程零跳动。
            新图可以不写，加载后仍会自动修正，只是首屏会有一次小小的撑高
-   墙内缩略图（自动启用，不用配置）：把与原图同名的 jpg 放到
+   墙内缩略图（自动启用，不用配置）：把与原图同名、同后缀的文件放到
            assets/img/album/thumb/ 即可；没有缩略图的图自动退回原图。
            视频 poster：与视频同名、后缀 -poster.jpg（如 guli-01-poster.jpg）
 
@@ -31,35 +31,48 @@ const FRIENDS = [
     name: '陨星',
     avatar: 'assets/img/avatars/yunxing.jpg',
     plate: 'assets/img/plate/yunxing.jpg',
-    note: '占位：陨星。',
-    tags: [],
     images: [
-      'assets/img/album/yunxing-01.jpg',
-      'assets/img/album/yunxing-02.jpg',
-      'assets/img/album/yunxing-03.jpg'
+      'assets/img/album/yunxing-04.jpg',
+      'assets/img/album/yunxing-05.jpg',
+      'assets/img/album/yunxing-06.jpg',
+      'assets/img/album/yunxing-07.jpg',
+      'assets/img/album/yunxing-08.jpg'
     ],
     dims: {
-      'yunxing-01.jpg': [1920, 1200],
-      'yunxing-02.jpg': [1920, 1200],
-      'yunxing-03.jpg': [1920, 1200]
+      'yunxing-04.jpg': [960, 504],
+      'yunxing-05.jpg': [1920, 868],
+      'yunxing-06.jpg': [1920, 868],
+      'yunxing-07.jpg': [1920, 868],
+      'yunxing-08.jpg': [1920, 868]
     },
-    captions: []
+    captions: [],
+    together: {
+      images: [
+        'assets/img/album/yunxing-memory-01.png',
+        'assets/img/album/yunxing-memory-02.png',
+        'assets/img/album/yunxing-memory-03.png'
+      ],
+      dims: {
+        'yunxing-memory-01.png': [2560, 1600],
+        'yunxing-memory-02.png': [2560, 1600],
+        'yunxing-memory-03.png': [2560, 1600]
+      },
+      captions: []
+    }
   },
   {
     id: 'friend-01',
     name: '爱与诚',
     avatar: 'assets/img/avatars/aicheng.jpg',
-    note: '占位：爱与诚。',
-    tags: [],
     images: [
       'assets/img/album/aicheng-01.jpg',
       'assets/img/album/aicheng-02.jpg',
       'assets/img/album/aicheng-03.jpg'
     ],
     dims: {
-      'aicheng-01.jpg': [1440, 648],
-      'aicheng-02.jpg': [1440, 648],
-      'aicheng-03.jpg': [1440, 648]
+      'aicheng-01.jpg': [2400, 1080],
+      'aicheng-02.jpg': [2400, 1080],
+      'aicheng-03.jpg': [1800, 810]
     },
     captions: []
   },
@@ -69,45 +82,103 @@ const FRIENDS = [
     avatar: 'assets/img/avatars/luoye.jpg',
     badge: 'assets/img/leaf-apple.png',
     plate: 'assets/img/plate/luoye.jpg',
-    note: '占位：落叶。',
-    tags: [],
     images: [
       'assets/img/album/luoye-01.jpg',
       'assets/img/album/luoye-02.jpg',
       'assets/img/album/luoye-03.jpg',
-      'assets/img/album/luoye-04.jpg',
-      'assets/img/album/suodi-01.mp4'
+      'assets/img/album/luoye-04.jpg'
     ],
     dims: {
-      'luoye-01.jpg': [1440, 617],
-      'luoye-02.jpg': [1440, 664],
-      'luoye-03.jpg': [1440, 665],
-      'luoye-04.jpg': [1440, 665],
-      'suodi-01.mp4': [1728, 1080]
+      'luoye-01.jpg': [1915, 821],
+      'luoye-02.jpg': [1847, 852],
+      'luoye-03.jpg': [1846, 852],
+      'luoye-04.jpg': [2340, 1080]
     },
-    captions: []
+    captions: [],
+    together: {
+      images: [
+        'assets/img/album/luoye-memory-01.jpg',
+        'assets/img/album/luoye-memory-02.jpg',
+        'assets/img/album/luoye-memory-03.jpg',
+        'assets/img/album/luoye-memory-01.mp4'
+      ],
+      dims: {
+        'luoye-memory-01.jpg': [1440, 900],
+        'luoye-memory-02.jpg': [1440, 900],
+        'luoye-memory-03.jpg': [1440, 900],
+        'luoye-memory-01.mp4': [1728, 1080]
+      },
+      captions: ['', '', '', '索敌']
+    }
   },
+  /* —— 故里：暂时隐藏，配置保留，需要时取消注释即可恢复 ——
   {
     id: 'friend-04',
     name: '故里',
     avatar: 'assets/img/avatars/guli.png',
-    note: '占位：故里。',
-    tags: [],
+    images: [],
+    captions: [],
+    together: {
+      images: ['assets/img/album/guli-memory-01.mp4'],
+      dims: {
+        'guli-memory-01.mp4': [1280, 800]
+      },
+      captions: ['尘世闲游']
+    }
+  },
+  */
+  {
+    id: 'friend-04',
+    name: '江亱',
+    avatar: 'assets/img/avatars/jiangdan.jpg',
+    plate: 'assets/img/plate/jiangdan.jpg',
     images: [
-      'assets/img/album/guli-01.mp4'
+      'assets/img/album/jiangdan-01.jpg',
+      'assets/img/album/jiangdan-02.jpg',
+      'assets/img/album/jiangdan-03.jpg',
+      'assets/img/album/jiangdan-04.jpg',
+      'assets/img/album/jiangdan-05.jpg'
     ],
     dims: {
-      'guli-01.mp4': [1280, 800]
+      'jiangdan-01.jpg': [1920, 864],
+      'jiangdan-02.jpg': [1920, 864],
+      'jiangdan-03.jpg': [1920, 864],
+      'jiangdan-04.jpg': [1920, 864],
+      'jiangdan-05.jpg': [1920, 864]
     },
-    captions: ['尘世闲游']
+    captions: []
   },
   {
     id: 'friend-05',
     name: '空白',
-    avatar: 'assets/img/avatars/placeholder.svg',
-    note: '占位：空白。',
-    tags: [],
+    avatar: 'assets/img/avatars/kongbai.jpg',
+    plate: 'assets/img/plate/kongbai.jpg',
     images: [],
+    captions: []
+  },
+  {
+    id: 'friend-06',
+    name: '枫叶の诗',
+    avatar: 'assets/img/avatars/fengye.jpg',
+    plate: 'assets/img/plate/fengye.jpg',
+    images: [
+      'assets/img/album/fengye-01.png',
+      'assets/img/album/fengye-02.png',
+      'assets/img/album/fengye-03.png',
+      'assets/img/album/fengye-04.png',
+      'assets/img/album/fengye-05.png',
+      'assets/img/album/fengye-06.png',
+      'assets/img/album/fengye-07.png'
+    ],
+    dims: {
+      'fengye-01.png': [2560, 1600],
+      'fengye-02.png': [2560, 1600],
+      'fengye-03.png': [2560, 1600],
+      'fengye-04.png': [2560, 1600],
+      'fengye-05.png': [2560, 1600],
+      'fengye-06.png': [2560, 1600],
+      'fengye-07.png': [2560, 1600]
+    },
     captions: []
   }
 ];
@@ -117,19 +188,18 @@ const ME = {
   id: 'me',
   name: '小虫',
   avatar: 'assets/img/avatars/xiaochong.png',
-  note: '站主本人。',
   masonry: true,   /* PC 端照片墙双列瀑布流：长图只撑自己那列 */
   images: [
-    'assets/img/album/xiaochong-01.jpg',
+    'assets/img/album/xiaochong-01.png',
     'assets/img/album/xiaochong-02.jpg',
-    'assets/img/album/xiaochong-03.jpg',
+    'assets/img/album/xiaochong-03.png',
     'assets/img/album/xiaochong-04.jpg'
   ],
   dims: {
-    'xiaochong-01.jpg': [1440, 900],
-    'xiaochong-02.jpg': [664, 1440],
-    'xiaochong-03.jpg': [1440, 900],
-    'xiaochong-04.jpg': [1440, 1080]
+    'xiaochong-01.png': [2560, 1600],
+    'xiaochong-02.jpg': [1179, 2556],
+    'xiaochong-03.png': [2560, 1600],
+    'xiaochong-04.jpg': [4032, 3024]
   },
   captions: []
 };
