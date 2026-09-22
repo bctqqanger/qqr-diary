@@ -17,3 +17,6 @@ _frame.html
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# agent 工具权限缓存配置
+reasonix.toml
