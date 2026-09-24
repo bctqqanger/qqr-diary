@@ -382,6 +382,10 @@
       var head = make('header', 'plate__head');
       var headCopy = make('div', 'plate__head-copy');
       headCopy.appendChild(make('h2', 'plate__title', f.name));
+      var signature = make('span', 'plate__signature' + (f.signature ? ' has-content' : ''));
+      if (f.signature) signature.textContent = f.signature;
+      else signature.setAttribute('aria-hidden', 'true');
+      headCopy.appendChild(signature);
       head.appendChild(headCopy);
       /* 右上角留给「共同相册」按钮；站主页没有按钮，保留 ✦ 装饰 */
       if (isMe) head.appendChild(make('span', 'plate__head-mark', '✦'));

@@ -12,6 +12,7 @@
            给了图就整页铺这张图，并自动压一层浅色蒙版让它不喧宾夺主
    captions 与 images 一一对应的照片标题，点开全屏大图时显示在图片下方；
             留空数组或删掉这个字段，放大层就退回显示好友名
+   signature 可选。显示在个人照片墙姓名右侧；内容未定时省略，保留装饰性签名位置
    together 可选。与站主一起拍摄的照片相册，格式为：
             { images: [], captions: [], dims: {}, plate: '可选底图', masonry: false }
    images  该条目的全部图片
@@ -29,6 +30,7 @@ const FRIENDS = [
   {
     id: 'friend-02',
     name: '陨星',
+    signature: '不好玩',
     avatar: 'assets/img/avatars/yunxing.jpg',
     plate: 'assets/img/plate/yunxing.jpg',
     images: [
@@ -63,6 +65,7 @@ const FRIENDS = [
   {
     id: 'friend-01',
     name: '爱与诚',
+    signature: '旅途多艰，愿我们都能抵达预期的终点。',
     avatar: 'assets/img/avatars/aicheng.jpg',
     images: [
       'assets/img/album/aicheng-01.jpg',
@@ -130,6 +133,7 @@ const FRIENDS = [
   {
     id: 'friend-04',
     name: '江亱',
+    signature: '此身原本不知愁，最怕万一见温柔。',
     avatar: 'assets/img/avatars/jiangdan.jpg',
     plate: 'assets/img/plate/jiangdan.jpg',
     images: [
@@ -151,9 +155,29 @@ const FRIENDS = [
   {
     id: 'friend-05',
     name: '空白',
+    signature: '世间万般皆虚假，唯有身旁祂真实',
     avatar: 'assets/img/avatars/kongbai.jpg',
     plate: 'assets/img/plate/kongbai.jpg',
-    images: [],
+    images: [
+      'assets/img/album/kongbai-01.jpg',
+      'assets/img/album/kongbai-02.jpg',
+      'assets/img/album/kongbai-03.jpg',
+      'assets/img/album/kongbai-04.jpg',
+      'assets/img/album/kongbai-05.jpg',
+      'assets/img/album/kongbai-06.jpg',
+      'assets/img/album/kongbai-08.jpg',
+      'assets/img/album/kongbai-07.jpg'
+    ],
+    dims: {
+      'kongbai-01.jpg': [1440, 900],
+      'kongbai-02.jpg': [1440, 900],
+      'kongbai-03.jpg': [1440, 900],
+      'kongbai-04.jpg': [1440, 900],
+      'kongbai-05.jpg': [1440, 900],
+      'kongbai-06.jpg': [1440, 900],
+      'kongbai-07.jpg': [1440, 900],
+      'kongbai-08.jpg': [1440, 900]
+    },
     captions: []
   },
   {
@@ -187,6 +211,7 @@ const FRIENDS = [
 const ME = {
   id: 'me',
   name: '小虫',
+  signature: '要活的不会后悔，就只是这样。',
   avatar: 'assets/img/avatars/xiaochong.png',
   masonry: true,   /* PC 端照片墙双列瀑布流：长图只撑自己那列 */
   images: [
